@@ -1,2 +1,2 @@
-# dia-agents-headless
-Headless agent for 
+# dia-soi-boilerplate-node
+Node.js SOI Boilerplate
