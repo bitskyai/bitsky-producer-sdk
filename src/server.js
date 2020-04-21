@@ -8,16 +8,16 @@
 const { addNodeModuleFromConfigJSON } = require('./utils/nodeModules');
 addNodeModuleFromConfigJSON();
 const enableDestroy = require("server-destroy");
-const config = require("./utils/config");
+const { getConfigByKey } = require("./utils/config");
 const createApp = require("./app");
 
 async function startServer() {
   try {
     const app = await createApp();
-    const server = app.listen(config.PORT, function() {
+    const server = app.listen(getConfigByKey("PORT"), function() {
       console.info(
         "Express server listening on http://localhost:%d/ in %s mode",
-        config.PORT,
+        getConfigByKey("PORT"),
         app.get("env")
       );
     });

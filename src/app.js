@@ -9,7 +9,7 @@ const logger = require("morgan");
 
 const indexRouter = require("./routes/index");
 const healthRouter = require("./routes/health");
-const agent = require('./agent');
+const watchAgent = require('./agent');
 
 async function createApp() {
   try {
@@ -46,7 +46,8 @@ async function createApp() {
       res.render("error");
     });
 
-    agent();
+    // watch agent change
+    watchAgent();
 
     return app;
   } catch (err) {

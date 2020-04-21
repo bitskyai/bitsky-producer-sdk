@@ -1,4 +1,6 @@
 "use strict";
+const path = require('path');
+const packageJson = require("../../package.json");
 
 module.exports = {
   DEBUG: false,
@@ -15,7 +17,9 @@ module.exports = {
     timeout: 90,
     maxRetry: 1 // Max retry time that agent will try to execute an intelligence
   },
-  AGENT_METADATA_TYPE: "BROWSEREXTENSION",
+  SERVICE_NAME: packageJson.name,
+  LOG_FILES_PATH: path.join(__dirname, '../public/log'),
+  AGENT_METADATA_TYPE: "HEADLESS_AGENT",
   // DIA Server Configuration
   DIA_METADATA_PATH: "/apis/intelligences",
   DIA_METADATA_METHOD: "GET",
@@ -34,32 +38,11 @@ module.exports = {
   X_SECURITY_KEY_HEADER: "x-munew-security-key",
   X_REQUESTED_WITH: "x-munew-requested-with", // who send this request
   AGENT_ID_HEADER: "x-munew-agent-id",
-  OPTIONS_KEY: {
-    // keys that used in local storage
-    AGENT: "agent",
-    SECURITY_KEY: "security_key",
-    WORKING_INTELLIGENCES: "working_intelligences",
-    AGENT_GLOBAL_ID: "agent_global_id",
-    DIA_METADATA_URL: "dia_metadata_url",
-    DIA_METADATA_PATH: "dia_metadata_path",
-    DIA_METADATA_METHOD: "dia_metadata_method",
-    DIA_METADATA_HEALTH_PATH: "dia_metadata_health_path",
-    DIA_METADATA_HEALTH_METHOD: "dia_metadata_health_method",
-    DIA_METADATA_API_KEY: "dia_metadata_api_key",
-    POLLING_INTERVAL: "polling_interval",
-    MAX_WAITING_TIME: "max_waiting_time",
-    MAX_CRAWL_TIMES: "max_crawl_times",
-    IDLE_TIME: "idle_time",
-    STOP_WATCHING_NEW_JOB: "stop_watching_new_job",
-    PRIVATE_MODE: "PRIVATE_MODE",
-    EACH_TIME_INTELLIGENCES_LIMIT: "each_time_intelligences_limit",
-    INTELLIGENCE_TIMEOUT: "intelligence_timeout",
-    MAX_RETRY_TIME: "max_retry_time"
-  },
   AGENT_STATE: {
     draft: "DRAFT",
     configured: "CONFIGURED",
     active: "ACTIVE",
     deleted: "DELETED"
-  }
+  },
+  PREFERENCES_FILE: path.join(__dirname, '../public/preferences.json')
 };
