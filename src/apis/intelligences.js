@@ -45,14 +45,14 @@ async function getIntelligencesAPI() {
           resolve(res.data);
         })
         .catch((err) => {
-          logger.error("[getIntelligences][Fail]. Error: ", err);
+          logger.debug("[getIntelligences][Fail]. Error: ", err);
 
           // the reason of return [] is because, normally agent is automatically start and close, no human monitor it
           // to make sure work flow isn't stopped, so resolve it as []
           resolve([]);
         });
     } catch (err) {
-      logger.error("[getIntelligences][Fail]. Error: ", err);
+      logger.debug("[getIntelligences][Fail]. Error: ", err);
 
       // the reason of return [] is because, normally agent is automatically start and close, no human monitor it
       // to make sure work flow isn't stopped, so resolve it as []

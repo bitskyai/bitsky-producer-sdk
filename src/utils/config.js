@@ -3,17 +3,17 @@ const constants = require('./constants');
 let runtime = {
   browser: undefined, // puppeteer browser
   currentAgentConfig: undefined, // Current Agent Configuration
-  initedJob: false, // whether this job was inited
-  completedJobNumber: 0, // How many jobs were completed
   watchIntelligencesIntervalHandler: undefined, // setInterval handler for watch intelligences
   watchAgentIntervalHandler: undefined, // setInterval handler for get agent configuration
+  lastRunJobTime: undefined,
   runningJob: { // current running job
     totalIntelligences: [],
     collectedIntelligencesDict: {}, // collected intelligences
     collectedIntelligencesNumber: 0,
     jobId: undefined,
     startTime: 0,
-    jobTimeoutHandler: undefined
+    jobTimeoutHandler: undefined,
+    lockJob: false // whether in the middle of ending coleect
   },
 };
 

@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const uuid = require("uuid");
 const puppeteer = require("puppeteer");
-const { runtime, getConfigs } = require("./utils/config");
+const { runtime, getConfigs, getConfigByKey } = require("./utils/config");
 const logger = require("./utils/logger");
 const constants = require("./utils/constants");
 const {
@@ -47,7 +47,7 @@ async function getAgentConfiguration() {
       return agent;
     }
   } catch (err) {
-    logger.error("background->getAgentConfiguration, error:", err);
+    logger.debug("background->getAgentConfiguration, error:", err);
     return undefined;
   }
 }
@@ -73,7 +73,7 @@ async function compareAgentConfiguration() {
       _.get(config, "globalId") !== _.get(currentConfig, "globalId") ||
       _.get(config, "system.version") !== _.get(currentConfig, "system.version")
     ) {
-      logger.warn("Agent Configuration was changed, need to re-watchJob");
+      logger.debug("Agent Configuration was changed, need to re-watchJob");
       runtime.currentAgentConfig = config;
       // if type or globalId doesn't exist, then means get agent config fail
       // if get agent config, but type isn't same, then also fail
@@ -85,7 +85,7 @@ async function compareAgentConfiguration() {
           _.toUpper(constants.AGENT_STATE.active)
       ) {
         // endPollingGetIntelligences
-        logger.warn(
+        logger.debug(
           "Didn't get agent config from server or get agent type is different with current agent type or current agent isn't active state"
         );
         await endPollingGetIntelligences();
@@ -96,7 +96,7 @@ async function compareAgentConfiguration() {
       logger.debug("Agent Configuration is same, don't need to re-watchJob");
     }
   } catch (err) {
-    logger.error("startPollingGetAgent error: ", err);
+    logger.debug("startPollingGetAgent error: ", err);
     await endPollingGetIntelligences();
   }
 }
@@ -136,7 +136,7 @@ async function startPollingGetIntelligences() {
           Date.now() - runtime.runningJob.startTime >
           constants.COLLECT_JOB_TIMEOUT
         ) {
-          logger.warn(
+          logger.debug(
             `Currnet running job is timeout. jobId: ${runtime.runningJob.jobId}, startTime: ${runtime.runningJob.startTime}`
           );
           await endCollectIntelligencesJob();
@@ -147,7 +147,7 @@ async function startPollingGetIntelligences() {
     }, pollingValue);
     //logger.debug('startWatchNewJob -> _intervalHandlerToGetIntelligences: ', _intervalHandlerToGetIntelligences);
   } catch (err) {
-    logger.error("startPollingGetIntelligences fail. Error: ", err);
+    logger.debug("startPollingGetIntelligences fail. Error: ", err);
     await endPollingGetIntelligences();
   }
 }
@@ -159,7 +159,7 @@ async function endPollingGetIntelligences() {
     runtime.watchIntelligencesIntervalHandler = null;
     logger.debug("Successfully clear getIntelligencesInterval");
   } catch (err) {
-    logger.error();
+    logger.debug();
   }
 }
 
@@ -170,8 +170,8 @@ async function endPollingGetIntelligences() {
 async function startCollectIntelligencesJob() {
   try {
     // if runningJob.jobId isn't undefined, then means previous job isn't finish
-    if (runtime.runningJob.jobId) {
-      logger.error(
+    if (runtime.runningJob.jobId || runtime.runningJob.lockJob) {
+      logger.debug(
         "Call startCollectIntelligences but previous job still running"
       );
       return;
@@ -185,10 +185,11 @@ async function startCollectIntelligencesJob() {
 
     // start runningJob
     initRunningJob(intelligences);
+    logger.info(`Start job: ${runtime.runningJob.jobId}, intelligences: ${intelligences.length}`);
     // const agentConfigs = runtime.currentAgentConfig;
     if (!runtime.browser) {
       runtime.browser = await puppeteer.launch({
-        headless: false,
+        headless: getConfigByKey('HEADLESS'),
       });
     }
     let pages = await runtime.browser.pages();
@@ -199,10 +200,10 @@ async function startCollectIntelligencesJob() {
       if (!page) {
         page = await runtime.browser.newPage();
       }
-      page.goto(intelligence.url);
       promises.push(
         (() => {
           return new Promise((resolve) => {
+            page.goto(intelligence.url);
             page.on("load", async () => {
               try {
                 let functionBody = "";
@@ -226,7 +227,7 @@ async function startCollectIntelligencesJob() {
                     intelligence.system.state = "FINISHED";
                     intelligence.system.agent.endedAt = Date.now();
                   } catch (err) {
-                    logger.error("customFun return an error. ", err);
+                    logger.debug("customFun return an error. ", err);
                     intelligence.system.state = "FAILED";
                     intelligence.system.agent.endedAt = Date.now();
                   }
@@ -248,7 +249,7 @@ async function startCollectIntelligencesJob() {
                 runtime.runningJob.collectedIntelligencesNumber++;
                 resolve(intelligence);
               } catch (err) {
-                logger.error("page-load has error. ", err);
+                logger.debug("page-load has error. ", err);
                 intelligence.system.state = "FAILED";
                 intelligence.system.agent.endedAt = Date.now();
                 runtime.runningJob.collectedIntelligencesDict[
@@ -262,27 +263,38 @@ async function startCollectIntelligencesJob() {
         })()
       );
     }
+
+    // whether currently job timeout
+    let timeout = false;
     clearTimeout(runtime.runningJob.jobTimeoutHandler);
     runtime.runningJob.jobTimeoutHandler = setTimeout(() => {
-      logger.warn(
+      logger.debug(
         "currentJob timeout, need to force endCollectIntelligencesJob"
       );
+      runtime.runningJob.jobTimeoutHandler = undefined;
+      timeout = true;
       endCollectIntelligencesJob();
     }, constants.COLLECT_JOB_TIMEOUT);
 
     Promise.all(promises)
       .then(() => {
+        if(timeout){
+          return;
+        }
         clearTimeout(runtime.runningJob.jobTimeoutHandler);
         runtime.runningJob.jobTimeoutHandler = undefined;
         endCollectIntelligencesJob();
       })
       .catch((err) => {
+        if(timeout){
+          return;
+        }
         clearTimeout(runtime.runningJob.jobTimeoutHandler);
         runtime.runningJob.jobTimeoutHandler = undefined;
         endCollectIntelligencesJob();
       });
   } catch (err) {
-    logger.error("startCollectIntelligencesJob fail! ", err);
+    logger.error(`Start job fail: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`, err);
     endCollectIntelligencesJob();
   }
 }
@@ -338,7 +350,7 @@ async function sendToDIA(intelligences) {
     await updateIntelligencesAPI(intelligences);
   } catch (err) {
     //TODO: Need to improve this, if it has error, need to store intelligences and retry
-    logger.error("sendToDIA fail, error: ", err);
+    logger.debug("sendToDIA fail, error: ", err);
 
     // If cannot update to DIA, then seems something wrong happened, shouldn't sent this to SOI
     throw err;
@@ -363,7 +375,7 @@ async function sendToSOIAndDIA(intelligences) {
     let callbackPath = _.get(intelligences[i], "soi.callback.path");
     // any of those intelligences don't exist, then skip this item
     if (!baseUrl || !method || !callbackPath) {
-      logger.error(
+      logger.debug(
         "sendToSOIAndDIA->invalid intelligences, miss baseUrl, method or callbackPath. Skip this item.",
         intelligences[i]
       );
@@ -407,7 +419,7 @@ async function sendToSOIAndDIA(intelligences) {
                 intelligences
               );
             } catch (err) {
-              logger.error(
+              logger.debug(
                 `[sendIntelligencesToSOI][Fail]. Key: ${key}. Error: `,
                 err
               );
@@ -426,11 +438,11 @@ async function sendToSOIAndDIA(intelligences) {
             } catch (err) {
               // if error, also will resolve as successful. The reason is to reduce complex for agent. Normally when sendToDIA fail, also cannot get intelligences
               // This maybe caused intelligences are collected multiple time.
-              logger.error("[sendToDIA][Fail], error: ", err);
+              logger.debug("[sendToDIA][Fail], error: ", err);
             }
             resolve([]);
           } catch (err) {
-            logger.error(`[sendToSOIAndDIA][Fail]. Key: ${key}. Error: `, err);
+            logger.debug(`[sendToSOIAndDIA][Fail]. Key: ${key}. Error: `, err);
             // the reason of return [] is because, normally agent is automatically start and close, no human monitor it
             // to make sure work flow isn't stopped, so resolve it as []
             resolve([]);
@@ -445,11 +457,13 @@ async function sendToSOIAndDIA(intelligences) {
 
 async function endCollectIntelligencesJob() {
   try {
-    // if not running job, then don't need to c
-    if (!runtime.runningJob.jobId) {
-      logger.error("endCollectIntelligencesJob: no running job");
+    // if not running job, then don't need to process endCollectIntelligencesJob
+    // only process during lockJob time
+    if (!runtime.runningJob.jobId || !runtime.runningJob.lockJob) {
+      logger.debug("endCollectIntelligencesJob: no running job");
       return;
     }
+    logger.info(`End job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`);
     let temp = [];
     for (let i = 0; i < runtime.runningJob.totalIntelligences.length; i++) {
       let tmp = runtime.runningJob.totalIntelligences[i];
@@ -481,16 +495,17 @@ async function endCollectIntelligencesJob() {
     try {
       await sendToSOIAndDIA(runtime.runningJob.totalIntelligences);
     } catch (err) {
-      logger.error(
+      logger.debug(
         "[sendToSOIAndDIA] shouldn't fail, something really bad happened! error: ",
         err
       );
     }
-
     logger.debug(`Total time: ${Date.now() - runtime.runningJob.startTime} ms`);
     resetRunningJob();
     await startCollectIntelligencesJob();
   } catch (err) {
+    logger.error(`Force end job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`, err);
+    // if cannot successfully end collect intelligence job, then intelligence will keep running state until timeout
     resetRunningJob();
     await startCollectIntelligencesJob();
   }
@@ -506,6 +521,7 @@ function resetRunningJob() {
     jobId: undefined,
     startTime: 0,
     jobTimeoutHandler: undefined,
+    lockJob: false
   };
 }
 
@@ -517,6 +533,7 @@ function initRunningJob(intelligences) {
     jobId: uuid.v4(),
     startTime: Date.now(),
     jobTimeoutHandler: undefined,
+    lockJob: true
   };
   return runtime.runningJob;
 }
