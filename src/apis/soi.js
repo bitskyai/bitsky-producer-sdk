@@ -10,6 +10,10 @@ function filterIntelligencesSendToSOI(data) {
   let filterIntelligences = [];
   let length = data && data.length;
   for (let i = 0; i < length; i++) {
+    if(_.toUpper(_.get(data[i], "system.state"))==_.toUpper("FAILED")){
+      // Don't send FAILED intelligences to SOI
+      continue;
+    }
     let intelligence = _.cloneDeep(data[i]);
     if (intelligence && intelligence.system) {
       delete intelligence.system;
@@ -30,14 +34,19 @@ function filterIntelligencesSendToSOI(data) {
 
 async function sendIntelligencesToSOI(baseURL, method, url, headers, data) {
   try {
-    let result = await http({
-      baseURL,
-      method,
-      url,
-      headers,
-      data: filterIntelligencesSendToSOI(data),
-    });
-    return result.data;
+    data = filterIntelligencesSendToSOI(data);
+    if(data.length){
+      let result = await http({
+        baseURL,
+        method,
+        url,
+        headers,
+        data: filterIntelligencesSendToSOI(data),
+      });
+      return result.data;
+    }else{
+      return data;
+    }
   } catch (err) {
     throw err;
   }

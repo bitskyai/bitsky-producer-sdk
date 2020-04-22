@@ -4,6 +4,7 @@ const packageJson = require("../../package.json");
 
 module.exports = {
   DEBUG: false,
+  LOG_LEVEL: "info",
   // Default agent configuration
   DEFAULT_AGENT_CONFIGURATION: {
     baseURL: "http://munew.io",
@@ -29,7 +30,7 @@ module.exports = {
   DIA_METADATA_API_KEY: undefined,
   DIA_SECURITY_KEY_PATH: "/apis/securitykey",
   TIMEOUT_VALUE_FOR_INTELLIGENCE: 5*60*1000,    // timeout value for intelligences stored in localstorage
-  COLLECT_JOB_TIMEOUT: 3*60*1000,               // A collect job's max time
+  COLLECT_JOB_TIMEOUT: 0.2*60*1000,               // A collect job's max time
 
   // unconfigurable from option
   POLLING_INTERVAL_CHECK_SERVER_STATUS: 60 * 1000,

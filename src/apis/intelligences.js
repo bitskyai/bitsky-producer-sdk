@@ -18,7 +18,7 @@ async function getIntelligencesAPI() {
   // get latest configurations
   let configs = await getConfigs();
   return new Promise((resolve, reject) => {
-    logger.info("getIntelligencesAPI()");
+    logger.debug("getIntelligencesAPI()");
     try {
       let headers = {};
       // Add security key

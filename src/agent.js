@@ -21,20 +21,20 @@ function joinURL(url, base) {
  * @returns {object|undefined} - Agent Configuration, **undefined** means cannot get any configuration
  */
 async function getAgentConfiguration() {
-  logger.info("getAgentConfiguration()");
+  logger.debug("getAgentConfiguration()");
   // Get stored agent configuration information, normally need to get DIA Base URL and Agent Global Id
   let configs = getConfigs();
   try {
-    logger.info("getAgentConfiguration->configs: ", configs);
+    logger.debug("getAgentConfiguration->configs: ", configs);
     // If Agent Global ID or DIA Base URL is empty, then return empty agent configuration
     if (!configs.MUNEW_BASE_URL || !configs.GLOBAL_ID) {
-      logger.info(
+      logger.debug(
         `Agent GlobalId or Munew BaseURL is empty, return Agent Config: ${configs}`
       );
       return undefined;
     } else {
       // Get Agent Configuration from server side
-      logger.info(
+      logger.debug(
         `Get Agent Config from server. Munew MetadData URL: ${configs.MUNEW_BASE_URL}, Agent Global ID: ${configs.GLOBAL_ID}, Security Key: ${configs.MUNEW_SECURITY_KEY}`
       );
       let agent = await getAgentAPI(
@@ -43,7 +43,7 @@ async function getAgentConfiguration() {
         configs.MUNEW_SECURITY_KEY
       );
       agent = _.merge({}, constants.DEFAULT_AGENT_CONFIGURATION, agent);
-      logger.info("background->getAgentConfiguration, agent: ", agent);
+      logger.debug("background->getAgentConfiguration, agent: ", agent);
       return agent;
     }
   } catch (err) {
@@ -57,13 +57,13 @@ async function getAgentConfiguration() {
  * @param {object} config - Agent config get from Remote
  */
 async function compareAgentConfiguration() {
-  logger.info("compareAgentConfiguration");
+  logger.debug("compareAgentConfiguration");
   try {
     // Get Agent Config from remote server
     let config = await getAgentConfiguration();
     // Get current Agent Config
     let currentConfig = runtime.currentAgentConfig;
-    logger.info("Current Agent config: ", currentConfig);
+    logger.debug("Current Agent config: ", currentConfig);
 
     // compare agent global id and version, if same then don't need to initJob, otherwise means agent was changed, then need to re-initJob
     // 1. globalId changed means change agent
@@ -93,7 +93,7 @@ async function compareAgentConfiguration() {
         await startPollingGetIntelligences();
       }
     } else {
-      logger.info("Agent Configuration is same, don't need to re-watchJob");
+      logger.debug("Agent Configuration is same, don't need to re-watchJob");
     }
   } catch (err) {
     logger.error("startPollingGetAgent error: ", err);
@@ -107,7 +107,7 @@ async function compareAgentConfiguration() {
  * @returns {boolean}
  */
 async function startPollingGetIntelligences() {
-  logger.info("startPollingGetIntelligences()");
+  logger.debug("startPollingGetIntelligences()");
   // logger
   try {
     // Before start, make sure we already stop previous job;
@@ -122,19 +122,15 @@ async function startPollingGetIntelligences() {
         constants.DEFAULT_AGENT_CONFIGURATION.pollingInterval) * 1000;
     // Comment: 04/17/2020, since we don't provide cloud version to customer, so let customer to decide how frequently they want agent to polling
     // let pollingValue = constants.DEFAULT_AGENT_CONFIGURATION.pollingInterval * 1000;
-    logger.info(`polling every ${pollingValue} ms`);
+    logger.debug(`polling every ${pollingValue} ms`);
     clearInterval(runtime.watchIntelligencesIntervalHandler);
     // interval to check new intelligences
     runtime.watchIntelligencesIntervalHandler = setInterval(async function () {
-      logger.info("startPollingGetIntelligences -> interval");
+      logger.debug("startPollingGetIntelligences -> interval");
       if (!runtime.runningJob.jobId) {
-        logger.info("No running job!");
+        logger.debug("No running job!");
         // don't have a in-progress job
-        let totalIntelligences = await getIntelligencesAPI();
-        if (totalIntelligences && totalIntelligences.length) {
-          // need to collect intelligences
-          await startCollectIntelligencesJob(totalIntelligences);
-        }
+        await startCollectIntelligencesJob();
       } else {
         if (
           Date.now() - runtime.runningJob.startTime >
@@ -145,11 +141,11 @@ async function startPollingGetIntelligences() {
           );
           await endCollectIntelligencesJob();
         } else {
-          logger.info("Continue waiting current job to finish");
+          logger.debug("Continue waiting current job to finish");
         }
       }
     }, pollingValue);
-    //logger.info('startWatchNewJob -> _intervalHandlerToGetIntelligences: ', _intervalHandlerToGetIntelligences);
+    //logger.debug('startWatchNewJob -> _intervalHandlerToGetIntelligences: ', _intervalHandlerToGetIntelligences);
   } catch (err) {
     logger.error("startPollingGetIntelligences fail. Error: ", err);
     await endPollingGetIntelligences();
@@ -158,10 +154,10 @@ async function startPollingGetIntelligences() {
 
 async function endPollingGetIntelligences() {
   try {
-    logger.info("endPollingGetIntelligences()");
+    logger.debug("endPollingGetIntelligences()");
     clearInterval(runtime.watchIntelligencesIntervalHandler);
     runtime.watchIntelligencesIntervalHandler = null;
-    logger.info("Successfully clear getIntelligencesInterval");
+    logger.debug("Successfully clear getIntelligencesInterval");
   } catch (err) {
     logger.error();
   }
@@ -171,15 +167,22 @@ async function endPollingGetIntelligences() {
  * Start collect intelligences
  * @param {array} intelligences - intelligences that need to be collected
  */
-async function startCollectIntelligencesJob(intelligences) {
+async function startCollectIntelligencesJob() {
   try {
     // if runningJob.jobId isn't undefined, then means previous job isn't finish
     if (runtime.runningJob.jobId) {
       logger.error(
         "Call startCollectIntelligences but previous job still running"
       );
-      return false;
+      return;
     }
+
+    let intelligences = await getIntelligencesAPI();
+    if (intelligences && !intelligences.length) {
+      // need to collect intelligences
+      return;
+    }
+
     // start runningJob
     initRunningJob(intelligences);
     // const agentConfigs = runtime.currentAgentConfig;
@@ -329,15 +332,14 @@ async function customFun(page, functionBody, intelligence) {
  * @param {array} intelligences -
  */
 async function sendToDIA(intelligences) {
-  logger.group("sendToDIA");
+  logger.debug("sendToDIA");
   try {
-    logger.log("intelligences: ", intelligences);
+    logger.debug("intelligences: ", intelligences);
     await updateIntelligencesAPI(intelligences);
-    logger.groupEnd();
   } catch (err) {
     //TODO: Need to improve this, if it has error, need to store intelligences and retry
     logger.error("sendToDIA fail, error: ", err);
-    logger.groupEnd();
+
     // If cannot update to DIA, then seems something wrong happened, shouldn't sent this to SOI
     throw err;
   }
@@ -351,7 +353,7 @@ async function sendToDIA(intelligences) {
  */
 async function sendToSOIAndDIA(intelligences) {
   // make sure send intelligences to correct SOI, in case, it contains multiple SOIs, so first category them
-  logger.log("[sendToSOIAndDIA][Start]");
+  logger.debug("[sendToSOIAndDIA][Start]");
   let sois = {};
   // Separate SOI based on url and method, so it can send to correct SOI
   // The reason is because it maybe contains multiple SOI's intelligences
@@ -473,20 +475,21 @@ async function endCollectIntelligencesJob() {
         _.set(intelligence, "system.agent.endedAt", Date.now());
       }
       temp.push(intelligence);
-      runtime.runningJob.totalIntelligences = temp;
-      try {
-        await sendToSOIAndDIA(runtime.runningJob.totalIntelligences);
-      } catch (err) {
-        logger.error(
-          "[sendToSOIAndDIA] shouldn't fail, something really bad happened! error: ",
-          err
-        );
-      }
-
-      logger.info(`Total time: ${Date.now() - runtime.runningJob.startTime} ms`);
-      resetRunningJob();
-      await startCollectIntelligencesJob();
     }
+
+    runtime.runningJob.totalIntelligences = temp;
+    try {
+      await sendToSOIAndDIA(runtime.runningJob.totalIntelligences);
+    } catch (err) {
+      logger.error(
+        "[sendToSOIAndDIA] shouldn't fail, something really bad happened! error: ",
+        err
+      );
+    }
+
+    logger.debug(`Total time: ${Date.now() - runtime.runningJob.startTime} ms`);
+    resetRunningJob();
+    await startCollectIntelligencesJob();
   } catch (err) {
     resetRunningJob();
     await startCollectIntelligencesJob();
@@ -502,7 +505,7 @@ function resetRunningJob() {
     collectedIntelligencesNumber: 0,
     jobId: undefined,
     startTime: 0,
-    jobTimeoutHandler: undefined
+    jobTimeoutHandler: undefined,
   };
 }
 
@@ -513,7 +516,7 @@ function initRunningJob(intelligences) {
     collectedIntelligencesNumber: 0,
     jobId: uuid.v4(),
     startTime: Date.now(),
-    jobTimeoutHandler: undefined
+    jobTimeoutHandler: undefined,
   };
   return runtime.runningJob;
 }
@@ -522,7 +525,7 @@ function initRunningJob(intelligences) {
  * Watch whether agent configuration changed remote
  */
 async function startPollingGetAgent() {
-  logger.info("startPollingGetAgent");
+  logger.debug("startPollingGetAgent");
   // Clear previous interval handler
   clearInterval(runtime.watchAgentIntervalHandler);
   runtime.watchAgentIntervalHandler = setInterval(() => {
