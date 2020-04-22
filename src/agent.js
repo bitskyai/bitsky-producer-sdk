@@ -179,11 +179,16 @@ async function startCollectIntelligencesJob() {
 
     let intelligences = await getIntelligencesAPI();
     if (intelligences && !intelligences.length) {
-      // need to collect intelligences
+      // no intelligences need to be collected
+      // close browser if it still opens
+      if(runtime.browser){
+        await runtime.browser.close();
+        runtime.browser = undefined;
+      }
       return;
     }
 
-    // start runningJob
+    // start collectIntelligencesJob
     initRunningJob(intelligences);
     logger.info(`Start job: ${runtime.runningJob.jobId}, intelligences: ${intelligences.length}`);
     // const agentConfigs = runtime.currentAgentConfig;
