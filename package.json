@@ -20,6 +20,7 @@
     "morgan": "~1.9.1",
     "puppeteer": "^3.0.0",
     "server-destroy": "^1.0.1",
+    "uuid": "^7.0.3",
     "winston": "^3.2.1"
   },
   "devDependencies": {

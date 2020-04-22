@@ -6,7 +6,7 @@ const { HTTPError } = require("./HTTPError");
 function http(config) {
   return new Promise((resolve, reject) => {
     let defaultHeader = {};
-    defaultHeader[constants.X_REQUESTED_WITH] = constants.AGENT_METADATA_TYPE;
+    defaultHeader[constants.X_REQUESTED_WITH] = constants.AGENT_TYPE;
     config.headers = _.merge({}, defaultHeader, config.headers||{});
     config.timeout = 20*1000; // timeout value: 20s, because pollingInterval is 30s
 

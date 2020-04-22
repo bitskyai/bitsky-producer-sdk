@@ -1,23 +1,19 @@
 const _ = require("lodash");
 const constants = require('./constants');
 let runtime = {
+  browser: undefined, // puppeteer browser
   currentAgentConfig: undefined, // Current Agent Configuration
   initedJob: false, // whether this job was inited
-  windowId: undefined, // browser window open by this extension, keep a reference, so it can close it later
-  collectedIntelligences: [], // collected intelligences
-  collectedIntelligenceNumber: 0, // how many intelligences were collected
-  // checkCrawlStatusIntervalHandler: undefined,
-  getIntelligencesIntervalHandler: undefined, //
-  watchAgentIntervalHandler: undefined, //
-  // stopJob: false, // stop watch new job
-  needCollectIntelligences: [],
-  runningJob: {
-    // current running job
+  completedJobNumber: 0, // How many jobs were completed
+  watchIntelligencesIntervalHandler: undefined, // setInterval handler for watch intelligences
+  watchAgentIntervalHandler: undefined, // setInterval handler for get agent configuration
+  runningJob: { // current running job
+    totalIntelligences: [],
+    collectedIntelligencesDict: {}, // collected intelligences
+    collectedIntelligencesNumber: 0,
     jobId: undefined,
-    totalIntelligences: 0,
-    remainIntelligences: 0,
     startTime: 0,
-    jobTimeoutHandler: undefined, // used to make sure Job will be ended
+    jobTimeoutHandler: undefined
   },
 };
 
