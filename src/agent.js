@@ -212,6 +212,7 @@ async function startCollectIntelligencesJob() {
     if (!runtime.browser) {
       runtime.browser = await puppeteer.launch({
         headless: getConfigByKey("HEADLESS"),
+        defaultViewport:null
       });
     }
     let pages = await runtime.browser.pages();
@@ -219,16 +220,14 @@ async function startCollectIntelligencesJob() {
     for (let i = 0; i < intelligences.length; i++) {
       let intelligence = intelligences[i];
       let page = pages[i];
-      if (!page) {
-        page = await runtime.browser.newPage();
-      }
       promises.push(
-        (() => {
+        (function (page, intelligence) {
           return new Promise(async (resolve, reject) => {
             try {
-              await page.goto(intelligence.url, {
-                waitUntil: "load",
-              });
+              if (!page) {
+                page = await runtime.browser.newPage();
+              }
+              await page.goto(intelligence.url);
               let functionBody = "";
               // Check whether this intelligence need to execute custom script
               if (
@@ -267,16 +266,18 @@ async function startCollectIntelligencesJob() {
               runtime.runningJob.collectedIntelligencesNumber++;
               resolve(intelligence);
             } catch (err) {
-              logger.debug("page-load has error. ", err);
+              logger.info(
+                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`
+              );
               setIntelligencesToFail(intelligence, err);
               runtime.runningJob.collectedIntelligencesDict[
                 intelligence.globalId
               ] = intelligence;
               runtime.runningJob.collectedIntelligencesNumber++;
-              reject(intelligence);
+              reject(err);
             }
           });
-        })()
+        })(page, intelligence)
       );
     }
 
@@ -304,7 +305,7 @@ async function startCollectIntelligencesJob() {
         if (timeout) {
           return;
         }
-        logger.info(`${runtime.runningJob.jobId} collect data fail.`);
+        logger.error(`${runtime.runningJob.jobId} collect data fail. Error: ${err.message}`);
         clearTimeout(runtime.runningJob.jobTimeoutHandler);
         runtime.runningJob.jobTimeoutHandler = undefined;
         endCollectIntelligencesJob();
@@ -332,7 +333,7 @@ async function startCollectIntelligencesJob() {
 async function customFun(page, functionBody, intelligence) {
   try {
     const dataset = await page.evaluate(
-      function (intelligence, functionBody) {
+      function (intelligence, functionBody, TIMEOUT) {
         return new Promise((resolve, reject) => {
           try {
             // if passed functionBody contains function () {  }, remove it.
@@ -352,19 +353,26 @@ async function customFun(page, functionBody, intelligence) {
             // TODO: Need to think about how to avoid custom script run too long
             // https://github.com/munew/dia-agents-browserextensions/issues/16
             fun(resolve, reject, intelligence);
+            setTimeout(() => {
+              reject(new Error("customFun evaluate timeout"));
+            }, TIMEOUT);
           } catch (err) {
             reject(err);
           }
         });
       },
       intelligence,
-      functionBody
+      functionBody,
+      constants.CUSTOM_FUNCTION_TIMEOUT
     );
     if (dataset instanceof Error) {
       throw dataset;
     }
     return dataset;
   } catch (err) {
+    logger.info(
+      `customFun fail. intelligence globalId: ${intelligence.globalId}. Error: ${err.message}`
+    );
     throw err;
   }
 }
@@ -475,7 +483,7 @@ async function sendToSOIAndDIA(intelligences) {
             }
             resolve([]);
           } catch (err) {
-            logger.debug(`[sendToSOIAndDIA][Fail]. Key: ${key}. Error: `, err);
+            logger.error(`[sendToSOIAndDIA][Fail]. Key: ${key}. Error: ${err.message}`);
             // the reason of return [] is because, normally agent is automatically start and close, no human monitor it
             // to make sure work flow isn't stopped, so resolve it as []
             resolve([]);
@@ -530,9 +538,8 @@ async function endCollectIntelligencesJob() {
     try {
       await sendToSOIAndDIA(runtime.runningJob.totalIntelligences);
     } catch (err) {
-      logger.debug(
-        "[sendToSOIAndDIA] shouldn't fail, something really bad happened! error: ",
-        err
+      logger.error(
+        `[endCollectIntelligencesJob->sendToSOIAndDIA] shouldn't fail, something really bad happened! error: ${err.message}`
       );
     }
     logger.debug(`Total time: ${Date.now() - runtime.runningJob.startTime} ms`);
@@ -540,8 +547,7 @@ async function endCollectIntelligencesJob() {
     await startCollectIntelligencesJob();
   } catch (err) {
     logger.error(
-      `Force end job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`,
-      err
+      `Force end job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}, error: ${err.message}`
     );
     // if cannot successfully end collect intelligence job, then intelligence will keep running state until timeout
     resetRunningJob();

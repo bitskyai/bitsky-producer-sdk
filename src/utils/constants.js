@@ -31,6 +31,7 @@ module.exports = {
   DIA_SECURITY_KEY_PATH: "/apis/securitykey",
   TIMEOUT_VALUE_FOR_INTELLIGENCE: 5*60*1000,    // timeout value for intelligences stored in localstorage
   COLLECT_JOB_TIMEOUT: 0.2*60*1000,               // A collect job's max time
+  CUSTOM_FUNCTION_TIMEOUT: 0.1*60*1000,         // Timeout value for a customFun call
 
   // unconfigurable from option
   POLLING_INTERVAL_CHECK_SERVER_STATUS: 60 * 1000,
