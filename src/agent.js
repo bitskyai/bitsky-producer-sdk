@@ -127,7 +127,7 @@ async function startPollingGetIntelligences() {
     // interval to check new intelligences
     runtime.watchIntelligencesIntervalHandler = setInterval(async function () {
       logger.debug("startPollingGetIntelligences -> interval");
-      if (!runtime.runningJob.jobId) {
+      if (!runtime.runningJob.jobId && !runtime.runningJob.lockJob) {
         logger.debug("No running job!");
         // don't have a in-progress job
         await startCollectIntelligencesJob();
@@ -163,6 +163,14 @@ async function endPollingGetIntelligences() {
   }
 }
 
+function setIntelligencesToFail(intelligence, err) {
+  intelligence.system.state = "FAILED";
+  intelligence.system.agent.endedAt = Date.now();
+  intelligence.system.failuresReason = _.get(err, "message");
+
+  return intelligence;
+}
+
 /**
  * Start collect intelligences
  * @param {array} intelligences - intelligences that need to be collected
@@ -177,24 +185,33 @@ async function startCollectIntelligencesJob() {
       return;
     }
 
+    // start collectIntelligencesJob lockJob need to excute ASAP
+    initRunningJob();
+    logger.info(`<<<<<<Start job: ${runtime.runningJob.jobId}`);
+
     let intelligences = await getIntelligencesAPI();
+    logger.info(`intelligences: ${intelligences.length}`);
     if (intelligences && !intelligences.length) {
       // no intelligences need to be collected
       // close browser if it still opens
-      if(runtime.browser){
+      if (runtime.browser) {
         await runtime.browser.close();
         runtime.browser = undefined;
       }
+      // don't need to crawl, resetRunningJob
+      logger.info(
+        `>>>>>>End job: ${runtime.runningJob.jobId} because not intelligences`
+      );
+      resetRunningJob();
       return;
     }
+    // set total intelligences that need to collect
+    runtime.runningJob.totalIntelligences = intelligences;
 
-    // start collectIntelligencesJob
-    initRunningJob(intelligences);
-    logger.info(`Start job: ${runtime.runningJob.jobId}, intelligences: ${intelligences.length}`);
     // const agentConfigs = runtime.currentAgentConfig;
     if (!runtime.browser) {
       runtime.browser = await puppeteer.launch({
-        headless: getConfigByKey('HEADLESS'),
+        headless: getConfigByKey("HEADLESS"),
       });
     }
     let pages = await runtime.browser.pages();
@@ -207,63 +224,57 @@ async function startCollectIntelligencesJob() {
       }
       promises.push(
         (() => {
-          return new Promise((resolve) => {
-            page.goto(intelligence.url);
-            page.on("load", async () => {
-              try {
-                let functionBody = "";
-                // Check whether this intelligence need to execute custom script
-                if (
-                  intelligence &&
-                  intelligence.metadata &&
-                  intelligence.metadata.script
-                ) {
-                  functionBody = intelligence.metadata.script;
-                }
-                if (functionBody) {
-                  // if it has custom function, then in custom function will return collected intelligence
-                  try {
-                    intelligence = await customFun(
-                      page,
-                      functionBody,
-                      intelligence
-                    );
-                    // also update intelligence state
-                    intelligence.system.state = "FINISHED";
-                    intelligence.system.agent.endedAt = Date.now();
-                  } catch (err) {
-                    logger.debug("customFun return an error. ", err);
-                    intelligence.system.state = "FAILED";
-                    intelligence.system.agent.endedAt = Date.now();
-                  }
+          return new Promise(async (resolve, reject) => {
+            try {
+              await page.goto(intelligence.url, {
+                waitUntil: "load",
+              });
+              let functionBody = "";
+              // Check whether this intelligence need to execute custom script
+              if (
+                intelligence &&
+                intelligence.metadata &&
+                intelligence.metadata.script
+              ) {
+                functionBody = intelligence.metadata.script;
+              }
+              if (functionBody) {
+                // if it has custom function, then in custom function will return collected intelligence
+                let dataset = await customFun(page, functionBody, intelligence);
+                if (dataset instanceof Error) {
+                  setIntelligencesToFail(intelligence, err);
                 } else {
-                  // otherwise default collect currently page
-                  intelligence.dataset = {
-                    url: page.url(),
-                    intelligences: {
-                      contentType: "html",
-                      content: page.$("html").innerHTML,
-                    },
-                  };
+                  // also update intelligence state
                   intelligence.system.state = "FINISHED";
                   intelligence.system.agent.endedAt = Date.now();
+                  intelligence.dataset = dataset;
                 }
-                runtime.runningJob.collectedIntelligencesDict[
-                  intelligence.globalId
-                ] = intelligence;
-                runtime.runningJob.collectedIntelligencesNumber++;
-                resolve(intelligence);
-              } catch (err) {
-                logger.debug("page-load has error. ", err);
-                intelligence.system.state = "FAILED";
+              } else {
+                // otherwise default collect currently page
+                intelligence.dataset = {
+                  url: page.url(),
+                  intelligences: {
+                    contentType: "html",
+                    content: page.$("html").innerHTML,
+                  },
+                };
+                intelligence.system.state = "FINISHED";
                 intelligence.system.agent.endedAt = Date.now();
-                runtime.runningJob.collectedIntelligencesDict[
-                  intelligence.globalId
-                ] = intelligence;
-                runtime.runningJob.collectedIntelligencesNumber++;
-                resolve(intelligence);
               }
-            });
+              runtime.runningJob.collectedIntelligencesDict[
+                intelligence.globalId
+              ] = intelligence;
+              runtime.runningJob.collectedIntelligencesNumber++;
+              resolve(intelligence);
+            } catch (err) {
+              logger.debug("page-load has error. ", err);
+              setIntelligencesToFail(intelligence, err);
+              runtime.runningJob.collectedIntelligencesDict[
+                intelligence.globalId
+              ] = intelligence;
+              runtime.runningJob.collectedIntelligencesNumber++;
+              reject(intelligence);
+            }
           });
         })()
       );
@@ -273,33 +284,38 @@ async function startCollectIntelligencesJob() {
     let timeout = false;
     clearTimeout(runtime.runningJob.jobTimeoutHandler);
     runtime.runningJob.jobTimeoutHandler = setTimeout(() => {
-      logger.debug(
-        "currentJob timeout, need to force endCollectIntelligencesJob"
-      );
+      logger.info(`${runtime.runningJob.jobId} timeout.`);
       runtime.runningJob.jobTimeoutHandler = undefined;
       timeout = true;
       endCollectIntelligencesJob();
     }, constants.COLLECT_JOB_TIMEOUT);
 
-    Promise.all(promises)
+    await Promise.all(promises)
       .then(() => {
-        if(timeout){
+        if (timeout) {
           return;
         }
+        logger.info(`${runtime.runningJob.jobId} collect data successful.`);
         clearTimeout(runtime.runningJob.jobTimeoutHandler);
         runtime.runningJob.jobTimeoutHandler = undefined;
         endCollectIntelligencesJob();
       })
       .catch((err) => {
-        if(timeout){
+        if (timeout) {
           return;
         }
+        logger.info(`${runtime.runningJob.jobId} collect data fail.`);
         clearTimeout(runtime.runningJob.jobTimeoutHandler);
         runtime.runningJob.jobTimeoutHandler = undefined;
         endCollectIntelligencesJob();
       });
   } catch (err) {
-    logger.error(`Start job fail: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`, err);
+    logger.info(
+      `Start job fail: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`,
+      err
+    );
+    clearTimeout(runtime.runningJob.jobTimeoutHandler);
+    runtime.runningJob.jobTimeoutHandler = undefined;
     endCollectIntelligencesJob();
   }
 }
@@ -314,31 +330,43 @@ async function startCollectIntelligencesJob() {
  * @return {object|Error} - return collected intelligences or error
  */
 async function customFun(page, functionBody, intelligence) {
-  return await page.evaluate(
-    async function (intelligence, functionBody) {
-      return new Promise((resolve, reject) => {
-        // if passed functionBody contains function () {  }, remove it.
-        let match = functionBody
-          .toString()
-          .match(/function[^{]+\{([\s\S]*)\}$/);
-        if (match) {
-          functionBody = match[1];
-        }
-        let fun = new Function(
-          "resolve",
-          "reject",
-          "intelligence",
-          functionBody
-        );
+  try {
+    const dataset = await page.evaluate(
+      function (intelligence, functionBody) {
+        return new Promise((resolve, reject) => {
+          try {
+            // if passed functionBody contains function () {  }, remove it.
+            let match = functionBody
+              .toString()
+              .match(/function[^{]+\{([\s\S]*)\}$/);
+            if (match) {
+              functionBody = match[1];
+            }
+            let fun = new Function(
+              "resolve",
+              "reject",
+              "intelligence",
+              functionBody
+            );
 
-        // TODO: Need to think about how to avoid custom script run too long
-        // https://github.com/munew/dia-agents-browserextensions/issues/16
-        fun(resolve, reject, intelligence);
-      });
-    },
-    intelligence,
-    functionBody
-  );
+            // TODO: Need to think about how to avoid custom script run too long
+            // https://github.com/munew/dia-agents-browserextensions/issues/16
+            fun(resolve, reject, intelligence);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      },
+      intelligence,
+      functionBody
+    );
+    if (dataset instanceof Error) {
+      throw dataset;
+    }
+    return dataset;
+  } catch (err) {
+    throw err;
+  }
 }
 
 /**
@@ -468,7 +496,9 @@ async function endCollectIntelligencesJob() {
       logger.debug("endCollectIntelligencesJob: no running job");
       return;
     }
-    logger.info(`End job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`);
+    logger.info(
+      `>>>>>>End job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`
+    );
     let temp = [];
     for (let i = 0; i < runtime.runningJob.totalIntelligences.length; i++) {
       let tmp = runtime.runningJob.totalIntelligences[i];
@@ -509,7 +539,10 @@ async function endCollectIntelligencesJob() {
     resetRunningJob();
     await startCollectIntelligencesJob();
   } catch (err) {
-    logger.error(`Force end job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`, err);
+    logger.error(
+      `Force end job: ${runtime.runningJob.jobId}, intelligences: ${runtime.runningJob.totalIntelligences.length}`,
+      err
+    );
     // if cannot successfully end collect intelligence job, then intelligence will keep running state until timeout
     resetRunningJob();
     await startCollectIntelligencesJob();
@@ -526,7 +559,7 @@ function resetRunningJob() {
     jobId: undefined,
     startTime: 0,
     jobTimeoutHandler: undefined,
-    lockJob: false
+    lockJob: false,
   };
 }
 
@@ -538,7 +571,7 @@ function initRunningJob(intelligences) {
     jobId: uuid.v4(),
     startTime: Date.now(),
     jobTimeoutHandler: undefined,
-    lockJob: true
+    lockJob: true,
   };
   return runtime.runningJob;
 }
