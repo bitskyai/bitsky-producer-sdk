@@ -250,11 +250,14 @@ async function startCollectIntelligencesJob() {
                 }
               } else {
                 // otherwise default collect currently page
+                const content = await page.$eval('html', (elem)=>{
+                  return elem&&elem.innerHTML;
+                });
                 intelligence.dataset = {
                   url: page.url(),
-                  intelligences: {
+                  data: {
                     contentType: "html",
-                    content: page.$("html").innerHTML,
+                    content: content,
                   },
                 };
                 intelligence.system.state = "FINISHED";
@@ -370,9 +373,9 @@ async function customFun(page, functionBody, intelligence) {
     }
     return dataset;
   } catch (err) {
-    logger.info(
-      `customFun fail. intelligence globalId: ${intelligence.globalId}. Error: ${err.message}`
-    );
+    // logger.info(
+    //   `customFun fail. intelligence globalId: ${intelligence.globalId}. Error: ${err.message}`
+    // );
     throw err;
   }
 }
