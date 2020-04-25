@@ -31,6 +31,9 @@
       "url": "https://github.com/jontewks/puppeteer-heroku-buildpack"
     },
     {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs#v170"
+    },
+    {
       "url": "https://github.com/debitoor/heroku-buildpack-converter-fonts"
     }
   ]
