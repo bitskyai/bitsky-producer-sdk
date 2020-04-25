@@ -1,7 +1,6 @@
 const _ = require("lodash");
 const constants = require("./constants");
 const fs = require("fs-extra");
-const logger = require("./logger");
 // Stores all the information used for runtime
 let runtime = {
   browser: undefined, // puppeteer browser
@@ -29,13 +28,13 @@ function getConfigs() {
   try {
     let preferences = {};
     // Get preferences.json
-    try {
-      preferences = fs.readJSONSync(constants.PREFERENCES_FILE) || {};
-    } catch (err) {
-      logger.error(
-        `Read ${constants.PREFERENCES_FILE} fail. Error: ${err.message}`
-      );
-    }
+    // try {
+    //   preferences = fs.readJSONSync(constants.PREFERENCES_FILE) || {};
+    // } catch (err) {
+    //   console.error(
+    //     `Read ${constants.PREFERENCES_FILE} fail. Error: ${err.message}`
+    //   );
+    // }
     // get configs from process env
     let configs = {
       MUNEW_BASE_URL: process.env.MUNEW_BASE_URL,
@@ -61,13 +60,13 @@ function getConfigs() {
     configs = _.merge(preferences, configs);
 
     if (!configs.MUNEW_BASE_URL) {
-      logger.warn(
+      console.warn(
         "You must set `MUNEW_BASE_URL` by `process.env.MUNEW_BASE_URL`. "
       );
     }
 
     if (!configs.GLOBAL_ID) {
-      logger.warn("You must set `GLOBAL_ID` by `process.env.GLOBAL_ID` ");
+      console.warn("You must set `GLOBAL_ID` by `process.env.GLOBAL_ID` ");
     }
 
     return configs;
