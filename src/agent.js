@@ -211,10 +211,12 @@ async function startCollectIntelligencesJob() {
 
     // const agentConfigs = runtime.currentAgentConfig;
     if (!runtime.browser) {
-      runtime.browser = await puppeteer.launch({
+      const params = {
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
         headless: configs["HEADLESS"],
         defaultViewport:null
-      });
+      };
+      runtime.browser = await puppeteer.launch(params);
     }
     let pages = await runtime.browser.pages();
     let promises = [];
