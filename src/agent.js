@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const uuid = require("uuid");
 const puppeteer = require("puppeteer");
-const { runtime, getConfigs, getConfigByKey } = require("./utils/config");
+const { runtime, getConfigs } = require("./utils/config");
 const logger = require("./utils/logger");
 const constants = require("./utils/constants");
 const {
@@ -23,7 +23,7 @@ function joinURL(url, base) {
 async function getAgentConfiguration() {
   logger.debug("getAgentConfiguration()");
   // Get stored agent configuration information, normally need to get DIA Base URL and Agent Global Id
-  let configs = getConfigs();
+  const configs = getConfigs();
   try {
     logger.debug("getAgentConfiguration->configs: ", configs);
     // If Agent Global ID or DIA Base URL is empty, then return empty agent configuration
@@ -177,6 +177,7 @@ function setIntelligencesToFail(intelligence, err) {
  */
 async function startCollectIntelligencesJob() {
   try {
+    const configs = getConfigs();
     // if runningJob.jobId isn't undefined, then means previous job isn't finish
     if (runtime.runningJob.jobId || runtime.runningJob.lockJob) {
       logger.debug(
@@ -211,7 +212,7 @@ async function startCollectIntelligencesJob() {
     // const agentConfigs = runtime.currentAgentConfig;
     if (!runtime.browser) {
       runtime.browser = await puppeteer.launch({
-        headless: getConfigByKey("HEADLESS"),
+        headless: configs["HEADLESS"],
         defaultViewport:null
       });
     }

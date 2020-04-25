@@ -5,19 +5,20 @@
 // =================================================
 // WARNING: This function must be called in the top
 // =================================================
-const { addNodeModuleFromConfigJSON } = require('./utils/nodeModules');
+const { addNodeModuleFromConfigJSON } = require("./utils/nodeModules");
 addNodeModuleFromConfigJSON();
 const enableDestroy = require("server-destroy");
-const { getConfigByKey } = require("./utils/config");
+const { getConfigs } = require("./utils/config");
 const createApp = require("./app");
 
 async function startServer() {
   try {
+    const configs = getConfigs();
     const app = await createApp();
-    const server = app.listen(getConfigByKey("PORT"), function() {
+    const server = app.listen(configs["PORT"], function () {
       console.info(
         "Express server listening on http://localhost:%d/ in %s mode",
-        getConfigByKey("PORT"),
+        configs["PORT"],
         app.get("env")
       );
     });

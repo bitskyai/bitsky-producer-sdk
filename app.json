@@ -1,0 +1,40 @@
+{
+  "name": "munew-headless-agent",
+  "description": "Headless agent is good for crawl data from SPA",
+  "keywords": [
+    "web crawling",
+    "web scraping",
+    "crawl",
+    "scrape",
+    "automation",
+    "nodejs"
+  ],
+  "website": "https://munew.io",
+  "logo": "https://raw.githubusercontent.com/munew/dia-electron/master/assets/icons/munew512.png",
+  "env": {
+    "MUNEW_BASE_URL": {
+      "description": "Your Munew Application's base url. Example: https://munew.herokuapp.com",
+      "required": true
+    },
+    "GLOBAL_ID": {
+      "description": "Your headless agent's globalID. ",
+      "required": true
+    },
+    "LOG_LEVEL": {
+      "description": "Winston logging level. Default is `info`, find detail from https://github.com/winstonjs/winston#logging-levels",
+      "required": false
+    }
+  },
+  "success_url": "/",
+  "buildpacks": [
+    {
+      "url": "https://github.com/jontewks/puppeteer-heroku-buildpack"
+    },
+    {
+      "url": "http://github.com/heroku/heroku-buildpack-nodejs.git"
+    },
+    {
+      "url": "https://github.com/debitoor/heroku-buildpack-converter-fonts"
+    }
+  ]
+}

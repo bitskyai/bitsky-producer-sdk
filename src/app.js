@@ -9,6 +9,7 @@ const logger = require("morgan");
 
 const indexRouter = require("./routes/index");
 const healthRouter = require("./routes/health");
+const agent = require('./routes/agent');
 const watchAgent = require('./agent');
 
 async function createApp() {
@@ -29,6 +30,7 @@ async function createApp() {
 
     app.use("/", indexRouter);
     app.use("/health", healthRouter);
+    app.use("/agent", agent);
 
     // catch 404 and forward to error handler
     app.use(function(req, res, next) {

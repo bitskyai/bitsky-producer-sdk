@@ -1,6 +1,6 @@
 const { createLogger, format, transports } = require("winston");
 const _ = require("lodash");
-const { getConfigByKey } = require("./config");
+const { getConfigs } = require("./config");
 const fs = require("fs-extra");
 
 // Only need one logger instance in whole system
@@ -8,14 +8,15 @@ let __logger;
 
 function createMyLogger() {
   try {
+    const configs = getConfigs();
     if (__logger) {
       // console.log('logger already created.');
       return __logger;
     }
-    fs.ensureDirSync(getConfigByKey("LOG_FILES_PATH"));
+    fs.ensureDirSync(configs["LOG_FILES_PATH"]);
     // console.log('[createLogger] starting...');
     __logger = createLogger({
-      level: getConfigByKey("LOG_LEVEL"),
+      level: configs["LOG_LEVEL"],
       format: format.combine(
         format.ms(),
         format.errors({ stack: true }),
@@ -24,7 +25,7 @@ function createMyLogger() {
         format.json()
       ),
       defaultMeta: {
-        service: getConfigByKey("SERVICE_NAME")
+        service: configs["SERVICE_NAME"],
       },
       transports: [
         //
@@ -32,25 +33,23 @@ function createMyLogger() {
         // - Write all logs error (and below) to `error.log`.
         //
         new transports.File({
-          filename: `${getConfigByKey("LOG_FILES_PATH")}/error.log`,
-          level: "error"
+          filename: `${configs["LOG_FILES_PATH"]}/error.log`,
+          level: "error",
         }),
         new transports.File({
-          filename: `${getConfigByKey("LOG_FILES_PATH")}/${getConfigByKey(
-            "SERVICE_NAME"
-          )}.log`
-        })
-      ]
+          filename: `${configs["LOG_FILES_PATH"]}/${configs["SERVICE_NAME"]}.log`,
+        }),
+      ],
     });
     //
     // If we're not in production then log to the `console` with the format:
     // `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
     //
-    if (getConfigByKey("NODE_ENV") !== "production") {
+    if (configs["NODE_ENV"] !== "production") {
       __logger.add(
         new transports.Console({
-          colorize: getConfigByKey("NODE_ENV") === "development",
-          timestamp: true
+          colorize: configs["NODE_ENV"] === "development",
+          timestamp: true,
         })
       );
     }
@@ -58,7 +57,7 @@ function createMyLogger() {
     // console.log('[createLogger] end');
     return __logger;
   } catch (err) {
-    console.error('error: ', err);
+    console.error("error: ", err);
     return console;
   }
 }

@@ -16,7 +16,7 @@ function joinURL(url, base) {
  */
 async function getIntelligencesAPI() {
   // get latest configurations
-  let configs = await getConfigs();
+  const configs = getConfigs();
   return new Promise((resolve, reject) => {
     logger.debug("getIntelligencesAPI()");
     try {
@@ -77,7 +77,7 @@ function filterIntelligencesSendToDIA(intelligences) {
 
 async function updateIntelligencesAPI(intelligences) {
   // Get configurations
-  let configs = await getConfigs();
+  const configs = getConfigs();
   return new Promise((resolve, reject) => {
     let headers = {};
     // Add security key
