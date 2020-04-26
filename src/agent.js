@@ -88,7 +88,6 @@ async function compareAgentConfiguration() {
         _.toUpper(_.get(config, "system.state")) !=
           _.toUpper(constants.AGENT_STATE.active)
       ) {
-        // endPollingGetIntelligences
         logger.warn(
           "Didn't get agent config from server or get agent type is different with current agent type or current agent isn't active state"
         );
@@ -106,7 +105,7 @@ async function compareAgentConfiguration() {
     }
   } catch (err) {
     logger.error(`compareAgentConfiguration error: ${_.get(err, "message")}`);
-    await endPollingGetIntelligences();
+    // await endPollingGetIntelligences();
   }
 }
 
@@ -161,7 +160,7 @@ async function startPollingGetIntelligences() {
     //logger.debug('startWatchNewJob -> _intervalHandlerToGetIntelligences: ', _intervalHandlerToGetIntelligences);
   } catch (err) {
     logger.error(`startPollingGetIntelligences fail. Error: ${err.message}`);
-    await endPollingGetIntelligences();
+    // await endPollingGetIntelligences();
   }
 }
 
@@ -225,7 +224,9 @@ async function startCollectIntelligencesJob() {
     // start collectIntelligencesJob lockJob need to excute ASAP
     initRunningJob();
     const configs = getConfigs();
-    logger.info(`<<<<<<Start job: ${runtime.runningJob.jobId}`);
+    logger.info(`<<<<<<Start job: ${runtime.runningJob.jobId}`, {
+      jobId: _.get(runtime, "runningJob.jobId"),
+    });
 
     let intelligences = await getIntelligencesAPI();
     logger.info(`intelligences: ${intelligences.length}`);
@@ -238,12 +239,14 @@ async function startCollectIntelligencesJob() {
       }
       // don't need to crawl, resetRunningJob
       logger.info(
-        `>>>>>>End job: ${runtime.runningJob.jobId} because not intelligences`,
+        `>>>>>> End job: ${runtime.runningJob.jobId} because not intelligences`,
         { jobId: _.get(runtime, "runningJob.jobId") }
       );
       resetRunningJob();
       return true;
     }
+    runtime.ranJobNumber++;
+    logger.info(`[[[[[[ Job Number: ${runtime.ranJobNumber} ]]]]]]`);
     // set total intelligences that need to collect
     runtime.runningJob.totalIntelligences = intelligences;
 

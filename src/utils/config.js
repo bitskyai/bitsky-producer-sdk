@@ -3,6 +3,7 @@ const constants = require("./constants");
 const fs = require("fs-extra");
 // Stores all the information used for runtime
 let runtime = {
+  ranJobNumber: 0,    // How many job ran
   browser: undefined, // puppeteer browser
   currentAgentConfig: undefined, // Current Agent Configuration
   watchIntelligencesIntervalHandler: undefined, // setInterval handler for watch intelligences
