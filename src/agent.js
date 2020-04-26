@@ -62,13 +62,6 @@ async function compareAgentConfiguration() {
     // Get Agent Config from remote server
     let config = await getAgentConfiguration();
     // Get current Agent Config
-    logger.info("Current Agent: ", {
-      agent: runtime.currentAgentConfig,
-    });
-
-    logger.info("Remote Agent: ", {
-      agent: config,
-    });
 
     logger.info(
       `From remote: globalId ${_.get(config, "globalId")}, version: ${_.get(
@@ -79,18 +72,18 @@ async function compareAgentConfiguration() {
     logger.info(
       `From local: globalId ${_.get(
         runtime,
-        "currentConfig.globalId"
-      )}, version: ${_.get(runtime, "currentConfig.system.version")} `
+        "currentAgentConfig.globalId"
+      )}, version: ${_.get(runtime, "currentAgentConfig.system.version")} `
     );
 
     // compare agent global id and version, if same then don't need to initJob, otherwise means agent was changed, then need to re-initJob
     // 1. globalId changed means change agent
     // 2. if globalId is same, then if version isn't same, then means this agent was changed
-    // if it is first time, then currentConfig should be undefined
+    // if it is first time, then currentAgentConfig should be undefined
     if (
-      _.get(config, "globalId") !== _.get(runtime, "currentConfig.globalId") ||
+      _.get(config, "globalId") !== _.get(runtime, "currentAgentConfig.globalId") ||
       _.get(config, "system.version") !==
-        _.get(runtime, "currentConfig.system.version")
+        _.get(runtime, "currentAgentConfig.system.version")
     ) {
       logger.debug("Agent Configuration was changed, need to re-watchJob");
       const configs = getConfigs();
