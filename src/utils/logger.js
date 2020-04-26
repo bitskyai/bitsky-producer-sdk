@@ -37,7 +37,7 @@ function createMyLogger() {
           level: "error",
         }),
         new transports.File({
-          filename: `${configs["LOG_FILES_PATH"]}/${configs["SERVICE_NAME"]}.log`,
+          filename: `${configs["LOG_FILES_PATH"]}/combined.log`,
         }),
       ],
     });

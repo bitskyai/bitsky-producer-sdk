@@ -16,6 +16,7 @@ let runtime = {
     jobId: undefined,
     startTime: 0,
     jobTimeoutHandler: undefined,
+    endingCollectIntelligencesJob: false,
     lockJob: false, // whether in the middle of ending coleect
   },
 };
