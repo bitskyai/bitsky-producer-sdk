@@ -62,9 +62,26 @@ async function compareAgentConfiguration() {
     // Get Agent Config from remote server
     let config = await getAgentConfiguration();
     // Get current Agent Config
-    logger.debug("Current Agent config: ", {
-      agentConfig: runtime.currentAgentConfig,
+    logger.info("Current Agent: ", {
+      agent: runtime.currentAgentConfig,
     });
+
+    logger.info("Remote Agent: ", {
+      agent: config,
+    });
+
+    logger.info(
+      `From remote: globalId ${_.get(config, "globalId")}, version: ${_.get(
+        config,
+        "system.version"
+      )} `
+    );
+    logger.info(
+      `From local: globalId ${_.get(
+        runtime,
+        "currentConfig.globalId"
+      )}, version: ${_.get(runtime, "currentConfig.system.version")} `
+    );
 
     // compare agent global id and version, if same then don't need to initJob, otherwise means agent was changed, then need to re-initJob
     // 1. globalId changed means change agent
@@ -100,11 +117,14 @@ async function compareAgentConfiguration() {
         `Agent Configuration is same, don't need to re-watchJob. Agent Global Id: ${_.get(
           runtime,
           "currentAgentConfig.globalId"
-        )}`
+        )}`,
+        { jobId: _.get(runtime, "runningJob.jobId") }
       );
     }
   } catch (err) {
-    logger.error(`compareAgentConfiguration error: ${_.get(err, "message")}`);
+    logger.error(`compareAgentConfiguration error: ${_.get(err, "message")}`, {
+      jobId: _.get(runtime, "runningJob.jobId"),
+    });
     // await endPollingGetIntelligences();
   }
 }
@@ -179,7 +199,8 @@ async function endPollingGetIntelligences() {
       `Successfully endPollingGetIntelligences, Agent Global ID: ${_.get(
         runtime,
         "currentAgentConfig.globalId"
-      )}`
+      )}`,
+      { jobId: _.get(runtime, "runningJob.jobId") }
     );
   } catch (err) {
     logger.error(
@@ -229,7 +250,9 @@ async function startCollectIntelligencesJob() {
     });
 
     let intelligences = await getIntelligencesAPI();
-    logger.info(`intelligences: ${intelligences.length}`);
+    logger.info(`intelligences: ${intelligences.length}`, {
+      jobId: _.get(runtime, "runningJob.jobId"),
+    });
     if (intelligences && !intelligences.length) {
       // no intelligences need to be collected
       // close browser if it still opens
