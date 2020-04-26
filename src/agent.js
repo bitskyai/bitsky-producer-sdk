@@ -81,7 +81,8 @@ async function compareAgentConfiguration() {
     // 2. if globalId is same, then if version isn't same, then means this agent was changed
     // if it is first time, then currentAgentConfig should be undefined
     if (
-      _.get(config, "globalId") !== _.get(runtime, "currentAgentConfig.globalId") ||
+      _.get(config, "globalId") !==
+        _.get(runtime, "currentAgentConfig.globalId") ||
       _.get(config, "system.version") !==
         _.get(runtime, "currentAgentConfig.system.version")
     ) {
@@ -262,7 +263,9 @@ async function startCollectIntelligencesJob() {
       return true;
     }
     runtime.ranJobNumber++;
-    logger.info(`[[[[[[ Job Number: ${runtime.ranJobNumber} ]]]]]]`);
+    logger.info(`[[[[[[ Job Number: ${runtime.ranJobNumber} ]]]]]]`, {
+      jobId: _.get(runtime, "runningJob.jobId"),
+    });
     // set total intelligences that need to collect
     runtime.runningJob.totalIntelligences = intelligences;
 
