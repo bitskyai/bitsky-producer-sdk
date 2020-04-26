@@ -1,6 +1,5 @@
 const _ = require("lodash");
 const uuid = require("uuid");
-const puppeteer = require("puppeteer");
 const { runtime, getConfigs } = require("./utils/config");
 const logger = require("./utils/logger");
 const constants = require("./utils/constants");
@@ -10,6 +9,7 @@ const {
 } = require("./apis/intelligences");
 const { sendIntelligencesToSOI } = require("./apis/soi");
 const { getAgentAPI } = require("./apis/agents");
+const { headlessCrawler } = require("./crawlers/headlessCrawler");
 
 function joinURL(url, base) {
   let urlInstance = new URL(url, base);
@@ -206,14 +206,6 @@ async function endPollingGetIntelligences() {
   }
 }
 
-function setIntelligencesToFail(intelligence, err) {
-  _.set(intelligence, "system.state", "FAILED");
-  _.set(intelligence, "system.agent.endedAt", Date.now());
-  _.set(intelligence, "system.failuresReason", _.get(err, "message"));
-
-  return intelligence;
-}
-
 /**
  * Start collect intelligences
  * @param {array} intelligences - intelligences that need to be collected
@@ -238,7 +230,7 @@ async function startCollectIntelligencesJob() {
 
     // start collectIntelligencesJob lockJob need to excute ASAP
     initRunningJob();
-    const configs = getConfigs();
+    // const configs = getConfigs();
     logger.info(`<<<<<<Start job: ${runtime.runningJob.jobId}`, {
       jobId: _.get(runtime, "runningJob.jobId"),
     });
@@ -268,86 +260,7 @@ async function startCollectIntelligencesJob() {
     });
     // set total intelligences that need to collect
     runtime.runningJob.totalIntelligences = intelligences;
-
-    // const agentConfigs = runtime.currentAgentConfig;
-    if (!runtime.browser) {
-      const params = {
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        headless: configs["HEADLESS"],
-        defaultViewport: null,
-      };
-      runtime.browser = await puppeteer.launch(params);
-    }
-    let pages = await runtime.browser.pages();
-    let promises = [];
-    for (let i = 0; i < intelligences.length; i++) {
-      let intelligence = intelligences[i];
-      let page = pages[i];
-      promises.push(
-        (function (page, intelligence) {
-          return new Promise(async (resolve, reject) => {
-            try {
-              if (!page) {
-                page = await runtime.browser.newPage();
-              }
-              await page.goto(intelligence.url);
-              let functionBody = "";
-              // Check whether this intelligence need to execute custom script
-              if (
-                intelligence &&
-                intelligence.metadata &&
-                intelligence.metadata.script
-              ) {
-                functionBody = intelligence.metadata.script;
-              }
-              if (functionBody) {
-                // if it has custom function, then in custom function will return collected intelligence
-                let dataset = await customFun(page, functionBody, intelligence);
-                if (dataset instanceof Error) {
-                  setIntelligencesToFail(intelligence, err);
-                } else {
-                  // also update intelligence state
-                  intelligence.system.state = "FINISHED";
-                  intelligence.system.agent.endedAt = Date.now();
-                  intelligence.dataset = dataset;
-                }
-              } else {
-                // otherwise default collect currently page
-                const content = await page.$eval("html", (elem) => {
-                  return elem && elem.innerHTML;
-                });
-                intelligence.dataset = {
-                  url: page.url(),
-                  data: {
-                    contentType: "html",
-                    content: content,
-                  },
-                };
-                intelligence.system.state = "FINISHED";
-                intelligence.system.agent.endedAt = Date.now();
-              }
-              runtime.runningJob.collectedIntelligencesDict[
-                intelligence.globalId
-              ] = intelligence;
-              runtime.runningJob.collectedIntelligencesNumber++;
-              resolve(intelligence);
-            } catch (err) {
-              logger.error(
-                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`,
-                { jobId: _.get(runtime, "runningJob.jobId") }
-              );
-              setIntelligencesToFail(intelligence, err);
-              runtime.runningJob.collectedIntelligencesDict[
-                intelligence.globalId
-              ] = intelligence;
-              runtime.runningJob.collectedIntelligencesNumber++;
-              reject(err);
-            }
-          });
-        })(page, intelligence)
-      );
-    }
-
+    const promises = await headlessCrawler(intelligences);
     // whether currently job timeout
     let timeout = false;
     clearTimeout(runtime.runningJob.jobTimeoutHandler);
@@ -394,62 +307,6 @@ async function startCollectIntelligencesJob() {
     clearTimeout(runtime.runningJob.jobTimeoutHandler);
     runtime.runningJob.jobTimeoutHandler = undefined;
     endCollectIntelligencesJob();
-  }
-}
-
-/**
- * Custom function that created by SOI.
- *
- * TODO: Need to improve security
- * @param {string} functionBody - function body
- * @param {object} intelligence - intelligence object
- *
- * @return {object|Error} - return collected intelligences or error
- */
-async function customFun(page, functionBody, intelligence) {
-  try {
-    const dataset = await page.evaluate(
-      function (intelligence, functionBody, TIMEOUT) {
-        return new Promise((resolve, reject) => {
-          try {
-            // if passed functionBody contains function () {  }, remove it.
-            let match = functionBody
-              .toString()
-              .match(/function[^{]+\{([\s\S]*)\}$/);
-            if (match) {
-              functionBody = match[1];
-            }
-            let fun = new Function(
-              "resolve",
-              "reject",
-              "intelligence",
-              functionBody
-            );
-
-            // TODO: Need to think about how to avoid custom script run too long
-            // https://github.com/munew/dia-agents-browserextensions/issues/16
-            fun(resolve, reject, intelligence);
-            setTimeout(() => {
-              reject(new Error("customFun evaluate timeout"));
-            }, TIMEOUT);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      },
-      intelligence,
-      functionBody,
-      constants.CUSTOM_FUNCTION_TIMEOUT
-    );
-    if (dataset instanceof Error) {
-      throw dataset;
-    }
-    return dataset;
-  } catch (err) {
-    // logger.info(
-    //   `customFun fail. intelligence globalId: ${intelligence.globalId}. Error: ${err.message}`
-    // );
-    throw err;
   }
 }
 
