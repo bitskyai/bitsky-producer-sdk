@@ -2,7 +2,7 @@ const axios = require("axios");
 const _ = require("lodash");
 const constants = require('./constants');
 const { HTTPError } = require("./HTTPError");
-const { getConfigs } = require('../utils/config');
+const { runtime, getConfigs } = require('../utils/config');
 
 function http(config) {
   return new Promise((resolve, reject) => {
@@ -10,7 +10,7 @@ function http(config) {
     const configs = getConfigs();
     defaultHeader[constants.X_REQUESTED_WITH] = configs.AGENT_TYPE;
     config.headers = _.merge({}, defaultHeader, config.headers||{});
-    config.timeout = 20*1000; // timeout value: 20s, because pollingInterval is 30s
+    config.timeout = _.get(runtime, 'currentAgentConfig.timeout')*1 || constants.REQUEST_TIMEOUT; // timeout value: 20s, because pollingInterval is 30s
 
     axios
       .request(config)

@@ -30,9 +30,9 @@ module.exports = {
   DIA_METADATA_HEALTH_METHOD: "GET",
   DIA_METADATA_API_KEY: undefined,
   DIA_SECURITY_KEY_PATH: "/apis/securitykey",
-  TIMEOUT_VALUE_FOR_INTELLIGENCE: 5*60*1000,    // timeout value for intelligences stored in localstorage
-  COLLECT_JOB_TIMEOUT: 0.2*60*1000,               // A collect job's max time
-  CUSTOM_FUNCTION_TIMEOUT: 0.1*60*1000,         // Timeout value for a customFun call
+  COLLECT_JOB_TIMEOUT: 3*60*1000,               // A collect job's max time
+  CUSTOM_FUNCTION_TIMEOUT: 1*60*1000,         // Timeout value for a customFun call
+  REQUEST_TIMEOUT: 30*1000,                   // Request timeout, include send to SOI or DIA
 
   // unconfigurable from option
   POLLING_INTERVAL_CHECK_SERVER_STATUS: 60 * 1000,
