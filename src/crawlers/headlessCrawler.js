@@ -71,8 +71,7 @@ async function headlessCrawler(intelligences) {
               resolve(intelligence);
             } catch (err) {
               logger.error(
-                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`,
-                { jobId: _.get(runtime, "runningJob.jobId") }
+                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`
               );
               setIntelligencesToFail(intelligence, err);
               runtime.runningJob.collectedIntelligencesDict[

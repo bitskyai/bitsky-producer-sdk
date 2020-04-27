@@ -12,7 +12,7 @@ async function serviceCrawler(intelligences) {
         ((intelligence) => {
           return new Promise(async (resolve, reject) => {
             try {
-              const data = await http({
+              const res = await http({
                 url: intelligence.url,
                 method: "GET",
               });
@@ -20,7 +20,7 @@ async function serviceCrawler(intelligences) {
                 url: intelligence.url,
                 data: {
                   contentType: "html",
-                  content: data,
+                  content: res.data,
                 },
               };
               intelligence.system.state = "FINISHED";
@@ -32,8 +32,7 @@ async function serviceCrawler(intelligences) {
               resolve(intelligence);
             } catch (err) {
               logger.error(
-                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`,
-                { jobId: _.get(runtime, "runningJob.jobId") }
+                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`
               );
               setIntelligencesToFail(intelligence, err);
               runtime.runningJob.collectedIntelligencesDict[
@@ -46,6 +45,8 @@ async function serviceCrawler(intelligences) {
         })(intelligences[i])
       );
     }
+
+    return promises;
   } catch (err) {
     logger.error(`serviceCrawler fail, error: ${err.message}`, {
       jobId: _.get(runtime, "runningJob.jobId"),
