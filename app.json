@@ -20,8 +20,14 @@
       "description": "Your headless agent's globalID. ",
       "required": true
     },
+    "AGENT_TYPE": {
+      "description": "Type of currently Agent. Enum value ['HEADLESSBROWSER', 'SERVICE']",
+      "value": "HEADLESSBROWSER",
+      "required": false
+    },
     "LOG_LEVEL": {
       "description": "Winston logging level. Default is `info`, find detail from https://github.com/winstonjs/winston#logging-levels",
+      "value": "info",
       "required": false
     }
   },

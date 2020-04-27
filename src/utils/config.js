@@ -44,6 +44,7 @@ function getConfigs() {
       GLOBAL_ID: process.env.GLOBAL_ID,
       PORT: Number(process.env.PORT) || 8090, // server port number
       SERVICE_NAME: process.env.SERVICE_NAME || constants.SERVICE_NAME,
+      AGENT_TYPE: process.env.AGENT_TYPE || constants.HEADLESS_AGENT_TYPE,
 
       // Defualt you don't need change it, only change when you know how,
       // otherwise, keep it as default

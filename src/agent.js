@@ -10,11 +10,8 @@ const {
 const { sendIntelligencesToSOI } = require("./apis/soi");
 const { getAgentAPI } = require("./apis/agents");
 const { headlessCrawler } = require("./crawlers/headlessCrawler");
-
-function joinURL(url, base) {
-  let urlInstance = new URL(url, base);
-  return urlInstance.toString();
-}
+const { serviceCrawler } = require('./crawlers/serviceCrawler');
+const { joinURL } = require('./utils');
 
 /**
  * Get an Agent's configuration
@@ -95,7 +92,7 @@ async function compareAgentConfiguration() {
         !configs.MUNEW_BASE_URL ||
         !_.get(config, "type") ||
         !_.get(config, "globalId") ||
-        _.toUpper(_.get(config, "type")) !== _.toUpper(constants.AGENT_TYPE) ||
+        _.toUpper(_.get(config, "type")) !== _.toUpper(configs.AGENT_TYPE) ||
         _.toUpper(_.get(config, "system.state")) !=
           _.toUpper(constants.AGENT_STATE.active)
       ) {
@@ -230,7 +227,6 @@ async function startCollectIntelligencesJob() {
 
     // start collectIntelligencesJob lockJob need to excute ASAP
     initRunningJob();
-    // const configs = getConfigs();
     logger.info(`<<<<<<Start job: ${runtime.runningJob.jobId}`, {
       jobId: _.get(runtime, "runningJob.jobId"),
     });
@@ -258,9 +254,15 @@ async function startCollectIntelligencesJob() {
     logger.info(`[[[[[[ Job Number: ${runtime.ranJobNumber} ]]]]]]`, {
       jobId: _.get(runtime, "runningJob.jobId"),
     });
+    const configs = getConfigs();
     // set total intelligences that need to collect
     runtime.runningJob.totalIntelligences = intelligences;
-    const promises = await headlessCrawler(intelligences);
+    let promises = [];
+    if(_.upperCase(configs.AGENT_TYPE) === _.upperCase(constants.SERVICE_AGENT_TYPE)){
+      promises = await serviceCrawler(intelligences);
+    }else{
+      promises = await headlessCrawler(intelligences);
+    }
     // whether currently job timeout
     let timeout = false;
     clearTimeout(runtime.runningJob.jobTimeoutHandler);

@@ -4,11 +4,7 @@ const http = require("../utils/http");
 const constants = require("../utils/constants");
 const { getConfigs } = require("../utils/config");
 const logger = require("../utils/logger");
-
-function joinURL(url, base) {
-  let urlInstance = new URL(url, base);
-  return urlInstance.toString();
-}
+const { joinURL } = require('../utils');
 
 /**
  * Get Intelligences that need to collect from DIA Server

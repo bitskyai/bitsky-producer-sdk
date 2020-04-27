@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 const _ = require("lodash");
+const { setIntelligencesToFail } = require("../utils");
 const logger = require("../utils/logger");
 const constants = require("../utils/constants");
 const { runtime, getConfigs } = require("../utils/config");
@@ -87,17 +88,11 @@ async function headlessCrawler(intelligences) {
 
     return promises;
   } catch (err) {
-    logger.error(`headlessCrawler fail, error: ${err.message}`);
+    logger.error(`headlessCrawler fail, error: ${err.message}`, {
+      jobId: _.get(runtime, "runningJob.jobId"),
+    });
     return [];
   }
-}
-
-function setIntelligencesToFail(intelligence, err) {
-  _.set(intelligence, "system.state", "FAILED");
-  _.set(intelligence, "system.agent.endedAt", Date.now());
-  _.set(intelligence, "system.failuresReason", _.get(err, "message"));
-
-  return intelligence;
 }
 
 /**

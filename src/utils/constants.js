@@ -20,7 +20,8 @@ module.exports = {
   },
   SERVICE_NAME: packageJson.name,
   LOG_FILES_PATH: path.join(__dirname, '../public/log'),
-  AGENT_TYPE: "HEADLESSBROWSER",
+  HEADLESS_AGENT_TYPE: "HEADLESSBROWSER",
+  SERVICE_AGENT_TYPE: "SERVICE",
   // DIA Server Configuration
   DIA_METADATA_PATH: "/apis/intelligences",
   DIA_METADATA_METHOD: "GET",
