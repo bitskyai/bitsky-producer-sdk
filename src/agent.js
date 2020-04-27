@@ -326,7 +326,7 @@ async function sendToDIA(intelligences) {
     await updateIntelligencesAPI(intelligences);
   } catch (err) {
     //TODO: Need to improve this, if it has error, need to store intelligences and retry
-    logger.error(`sendToDIA fail, error: ${err.message}`);
+    logger.error(`sendToDIA fail.`, err);
     // If cannot update to DIA, then seems something wrong happened, shouldn't sent this to SOI
     throw err;
   }

@@ -32,7 +32,8 @@ async function serviceCrawler(intelligences) {
               resolve(intelligence);
             } catch (err) {
               logger.error(
-                `collect intelligence fail. globalId: ${intelligence.globalId}. Error: ${err.message}`
+                `collect intelligence fail. globalId: ${intelligence.globalId}`,
+                err
               );
               setIntelligencesToFail(intelligence, err);
               runtime.runningJob.collectedIntelligencesDict[

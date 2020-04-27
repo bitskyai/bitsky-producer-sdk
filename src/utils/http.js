@@ -3,6 +3,7 @@ const _ = require("lodash");
 const constants = require('./constants');
 const { HTTPError } = require("./HTTPError");
 const { runtime, getConfigs } = require('../utils/config');
+const logger = require('./logger');
 
 function http(config) {
   return new Promise((resolve, reject) => {
@@ -23,6 +24,7 @@ function http(config) {
         resolve(res);
       })
       .catch(err => {
+        logger.error(`http send request fail`, err);
         let statusCode = _.get(err, "response.status") || 500;
         let data = {
           body: _.get(err, "response.data"),
