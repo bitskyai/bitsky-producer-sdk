@@ -24,7 +24,6 @@ function http(config) {
         resolve(res);
       })
       .catch(err => {
-        logger.error(`http send request fail`, err);
         let statusCode = _.get(err, "response.status") || 500;
         let data = {
           body: _.get(err, "response.data"),
@@ -37,6 +36,11 @@ function http(config) {
           },
           data
         );
+        logger.error(`http send request fail.`, {
+          jobId: _.get(runtime, "runningJob.jobId"),
+          message: _.get(err, "message"),
+          statusCode: statusCode
+        });
         reject(error);
       });
   });
