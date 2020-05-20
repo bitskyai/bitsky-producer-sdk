@@ -29,6 +29,8 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      VERSION: '${GITHUB_REF##*/v}'
     steps:
       - uses: actions/checkout@v2.1.0
         with:
@@ -41,8 +43,7 @@ jobs:
         run: |
           git config --global user.email "devops.bitspider@gmail.com"
           git config --global user.name "Devops"
-          version="${GITHUB_REF##*/v}"
-          npm version $version
+          npm version $VERSION
       - run: npm ci
       - name: Publish node_module
         run: npm publish
@@ -51,5 +52,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           # Required
+          branch: |
+            release/v"${VERSION}"
           commit_message: Apply changes caused by publish node_module
           commit_user_name: Devops
