@@ -1,0 +1,44 @@
+## this workflow is used to publish dia-agents-baseservice to npmjs.com
+## Trigger condition:
+## 1. create a branch named `release/agents-baseservice`
+## 2. create a new release from `release/agents-baseservice`
+name: Publish Base Service
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2.1.0
+        with:
+          submodules: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v1.4.2
+        with:
+          node-version: "12.x"
+      - name: Print git information and ls current folder
+        run: git status && pwd && ls
+      - name: Install node_modules
+        run: npm ci
+      - run: npm test
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.1.0
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1.4.2
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - name: Publish node_module
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}

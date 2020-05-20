@@ -1,5 +1,5 @@
 {
-  "name": "dia-agent-baseservice",
+  "name": "dia-agents-baseservice",
   "version": "0.1.0",
   "main": "./index.js",
   "author": "help.munewio@gmail.com",
@@ -7,6 +7,7 @@
     "node": ">=12.0.0"
   },
   "scripts": {
+    "test": "npm run lint",
     "lint": "eslint ."
   },
   "dependencies": {
