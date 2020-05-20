@@ -1,5 +1,5 @@
 {
-  "name": "dia-agent-baseservice",
+  "name": "dia-agents-baseservice",
   "version": "0.1.0",
   "main": "./index.js",
   "author": "help.munewio@gmail.com",
