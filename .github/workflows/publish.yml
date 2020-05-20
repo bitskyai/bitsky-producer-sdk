@@ -37,8 +37,17 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
+      - name: Update package.json version
+        run: |
+          version="${GITHUB_REF##*/v}"
+          npm version $version
       - run: npm ci
       - name: Publish node_module
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          # Required
+          commit_message: Apply changes caused by publish node_module
+          commit_user_name: GitHub Actions Bot
