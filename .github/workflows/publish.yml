@@ -20,46 +20,13 @@ jobs:
         uses: actions/setup-node@v1.4.2
         with:
           node-version: 12
-          registry-url: https://npm.pkg.github.com/
       - name: Print git information and ls current folder
         run: git status && pwd && ls
       - name: Install node_modules
         run: npm ci
       - run: npm test
 
-  # publish-npm:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2.1.0
-  #       with:
-  #         submodules: true
-  #     - uses: actions/setup-node@v1.4.2
-  #       with:
-  #         node-version: 12
-  #         registry-url: https://registry.npmjs.org/
-  #     - name: Update package.json version
-  #       run: |
-  #         git config --global user.email "devops.bitspider@gmail.com"
-  #         git config --global user.name "Devops"
-  #         VERSION=${GITHUB_REF##*/v}
-  #         npm version $VERSION
-  #         echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
-  #     - run: npm ci
-  #     - name: Publish node_module
-  #       run: |
-  #         npm publish
-  #         echo $VERSION > .published
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-  #     - uses: stefanzweifel/git-auto-commit-action@v4
-  #       with:
-  #         # Required
-  #         branch: release/v${{env.VERSION}}
-  #         commit_message: Apply changes caused by publish node_module
-  #         commit_user_name: Devops
-
-  publish-gpr:
+  publish-npm-gpr:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -69,7 +36,7 @@ jobs:
       - uses: actions/setup-node@v1.4.2
         with:
           node-version: 12
-          registry-url: https://npm.pkg.github.com/
+          registry-url: https://registry.npmjs.org/
       - name: Update package.json version
         run: |
           git config --global user.email "devops.bitspider@gmail.com"
@@ -78,6 +45,16 @@ jobs:
           npm version $VERSION
           echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
+      - name: Publish node_module
+        run: |
+          npm publish
+          echo $VERSION > .published
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - uses: actions/setup-node@v1.4.2
+        with:
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
       - name: Publish node_module
         run: |
           npm publish
