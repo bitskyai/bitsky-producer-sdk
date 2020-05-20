@@ -52,6 +52,6 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           # Required
-          branch: release/v"${{env.VERSION}}"
+          branch: release/v${{env.VERSION}}
           commit_message: Apply changes caused by publish node_module
           commit_user_name: Devops
