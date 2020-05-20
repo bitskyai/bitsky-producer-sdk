@@ -46,7 +46,9 @@ jobs:
           echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
       - name: Publish node_module
-        run: npm publish
+        run: |
+          npm publish
+          echo $VERSION > .published
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       - uses: stefanzweifel/git-auto-commit-action@v4
