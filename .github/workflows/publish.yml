@@ -39,6 +39,8 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Update package.json version
         run: |
+          git config --global user.email "devops.bitspider@gmail.com"
+          git config --global user.name "Devops"
           version="${GITHUB_REF##*/v}"
           npm version $version
       - run: yarn
@@ -50,4 +52,4 @@ jobs:
         with:
           # Required
           commit_message: Apply changes caused by publish node_module
-          commit_user_name: GitHub Actions Bot
+          commit_user_name: Devops
