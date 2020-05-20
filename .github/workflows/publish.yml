@@ -19,7 +19,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v1.4.2
         with:
-          node-version: "12.x"
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
       - name: Print git information and ls current folder
         run: git status && pwd && ls
       - name: Install node_modules
