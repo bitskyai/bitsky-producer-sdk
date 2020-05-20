@@ -47,7 +47,7 @@ jobs:
       - name: Publish node_module
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           # Required
