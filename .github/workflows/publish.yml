@@ -59,7 +59,9 @@ jobs:
       #     echo $VERSION > .published
       #   env:
       #     NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - run: echo "${VERSION}" > .published
+      - run: |
+          rm -rf .published
+          echo "${VERSION}" > .published
       # - run: |
       #     curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
       #   env:
