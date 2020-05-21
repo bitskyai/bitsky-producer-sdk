@@ -51,16 +51,16 @@ jobs:
           echo $VERSION > .published
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-      - uses: actions/setup-node@v1.4.2
-        with:
-          node-version: 12
-          registry-url: https://npm.pkg.github.com/
-      - name: Publish to github
-        run: |
-          npm publish
-          echo $VERSION > .published
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      # - uses: actions/setup-node@v1.4.2
+      #   with:
+      #     node-version: 12
+      #     registry-url: https://npm.pkg.github.com/
+      # - name: Publish to github
+      #   run: |
+      #     npm publish
+      #     echo $VERSION > .published
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Commit changes
         uses: EndBug/add-and-commit@v4
         with:
@@ -71,10 +71,3 @@ jobs:
           add: "*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - uses: stefanzweifel/git-auto-commit-action@v4
-      #   with:
-      #     # Required
-      #     branch: release/v${{env.VERSION}}
-      #     repository: ${{env.GITHUB_REPOSITORY}}
-      #     commit_message: Apply changes caused by publish node_module
-      #     commit_user_name: Devops
