@@ -1,7 +1,6 @@
 ## this workflow is used to publish dia-agents-baseservice to npmjs.com
 ## Trigger condition:
-## 1. create a branch named `release/agents-baseservice`
-## 2. create a new release from `release/agents-baseservice`
+## 1. create a release
 name: Publish Base Service
 on:
   release:
@@ -37,18 +36,18 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - name: Update package.json version
-        run: |
-          git config --global user.email "devops.bitspider@gmail.com"
-          git config --global user.name "Devops"
-          VERSION=${GITHUB_REF##*/v}
-          npm version $VERSION --allow-same-version
-          echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
+      # - name: Update package.json version
+      #   run: |
+      #     git config --global user.email "devops.bitspider@gmail.com"
+      #     git config --global user.name "Devops"
+      #     VERSION=${GITHUB_REF##*/v}
+      #     npm version $VERSION --allow-same-version
+      #     echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
-      # - name: Publish to npmjs.org
-      #   run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Publish to npmjs.org
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       # - uses: actions/setup-node@v1.4.2
       #   with:
       #     node-version: 12
@@ -62,24 +61,18 @@ jobs:
       # - run: |
       #     rm -rf .published
       #     echo "${VERSION}" > .published
-      - run: |
-          curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v4
-        with:
-          author_name: Devops
-          author_email: devops@bitspider.com
-          ref: release/v${{env.VERSION}}
-          message: "Apply changes caused by publish node_module"
-          add: "*"
-          tag: v${{env.VERSION}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Update Tag
-      #   uses: richardsimko/update-tag@master
+      # - run: |
+      #     curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Commit changes
+      #   uses: EndBug/add-and-commit@v4
       #   with:
-      #     tag_name: v${{env.VERSION}}
+      #     author_name: Devops
+      #     author_email: devops@bitspider.com
+      #     ref: release/v${{env.VERSION}}
+      #     message: "Apply changes caused by publish node_module"
+      #     add: "*"
+      #     tag: v${{env.VERSION}}
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
