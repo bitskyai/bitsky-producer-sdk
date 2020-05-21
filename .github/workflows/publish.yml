@@ -42,7 +42,7 @@ jobs:
           git config --global user.email "devops.bitspider@gmail.com"
           git config --global user.name "Devops"
           VERSION=${GITHUB_REF##*/v}
-          npm version $VERSION
+          npm version $VERSION --allow-same-version
           echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
       # - name: Publish to npmjs.org
