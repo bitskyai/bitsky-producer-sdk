@@ -72,6 +72,6 @@ jobs:
           ref: release/v${{env.VERSION}}
           message: "Apply changes caused by publish node_module"
           add: "*"
-          tag: v${{env.VERSION}}
+          # tag: v${{env.VERSION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
