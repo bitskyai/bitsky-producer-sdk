@@ -60,10 +60,10 @@ jobs:
       #   env:
       #     NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - run: echo "${VERSION}" > .published
-      - run: |
-          curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - run: |
+      #     curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit changes
         uses: EndBug/add-and-commit@v4
         with:
@@ -72,6 +72,11 @@ jobs:
           ref: release/v${{env.VERSION}}
           message: "Apply changes caused by publish node_module"
           add: "*"
-          # tag: v${{env.VERSION}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Tag
+        uses: richardsimko/update-tag@master
+        with:
+          tag_name: v${{env.VERSION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
