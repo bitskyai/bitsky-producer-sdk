@@ -62,6 +62,8 @@ jobs:
       - run: echo "${VERSION}" > .published
       - run: |
           curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit changes
         uses: EndBug/add-and-commit@v4
         with:
