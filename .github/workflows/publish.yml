@@ -46,9 +46,7 @@ jobs:
           echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
       - name: Publish to npmjs.org
-        run: |
-          npm publish
-          echo $VERSION > .published
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       # - uses: actions/setup-node@v1.4.2
@@ -61,6 +59,7 @@ jobs:
       #     echo $VERSION > .published
       #   env:
       #     NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - run: echo "${VERSION}" > .published
       - name: Commit changes
         uses: EndBug/add-and-commit@v4
         with:
@@ -69,5 +68,6 @@ jobs:
           ref: release/v${{env.VERSION}}
           message: "Apply changes caused by publish node_module"
           add: "*"
+          tag: v${{env.VERSION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
