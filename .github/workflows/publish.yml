@@ -45,22 +45,22 @@ jobs:
           npm version $VERSION
           echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       - run: npm ci
-      # - name: Publish node_module
-      #   run: |
-      #     npm publish
-      #     echo $VERSION > .published
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-      # - uses: actions/setup-node@v1.4.2
-      #   with:
-      #     node-version: 12
-      #     registry-url: https://npm.pkg.github.com/
-      # - name: Publish node_module
-      #   run: |
-      #     npm publish
-      #     echo $VERSION > .published
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Publish to npmjs.org
+        run: |
+          npm publish
+          echo $VERSION > .published
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - uses: actions/setup-node@v1.4.2
+        with:
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
+      - name: Publish to github
+        run: |
+          npm publish
+          echo $VERSION > .published
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Commit changes
         uses: EndBug/add-and-commit@v4
         with:
