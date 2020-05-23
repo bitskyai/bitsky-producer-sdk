@@ -22,7 +22,7 @@ jobs:
       - name: Print git information and ls current folder
         run: git status && pwd && ls
       - name: Install node_modules
-        run: npm ci
+        run: yarn
       - run: npm test
 
   publish-npm-gpr:
@@ -45,7 +45,8 @@ jobs:
       #     git config --global user.email "devops.bitspider@gmail.com"
       #     git config --global user.name "Devops"
       #     npm version $VERSION --allow-same-version
-      - run: yarn
+      - name: Install node_modules
+        run: yarn
       # - name: Publish to npmjs.org
       #   run: npm publish
       #   env:
