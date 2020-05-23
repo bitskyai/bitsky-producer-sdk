@@ -36,18 +36,20 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
+      - name: Get release version
+        run: |
+          VERSION=${GITHUB_REF##*/v}
+          echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
       # - name: Update package.json version
       #   run: |
       #     git config --global user.email "devops.bitspider@gmail.com"
       #     git config --global user.name "Devops"
-      #     VERSION=${GITHUB_REF##*/v}
       #     npm version $VERSION --allow-same-version
-      #     echo "::set-env name=VERSION::${GITHUB_REF##*/v}"
-      - run: npm ci
-      - name: Publish to npmjs.org
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - run: yarn
+      # - name: Publish to npmjs.org
+      #   run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       # - uses: actions/setup-node@v1.4.2
       #   with:
       #     node-version: 12
@@ -76,3 +78,33 @@ jobs:
       #     tag: v${{env.VERSION}}
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request to `master`
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "release/v${{env.VERSION}}"        # If blank, default: triggered branch
+          destination_branch: "master"                      # If blank, default: master
+          pr_title: |                                       # Title of pull request
+            "Release ${{env.VERSION}}: Pulling release/v${{env.VERSION}} into develop"
+          pr_body: |                                        # Full markdown support, requires pr_title to be set
+            ":crown: *An automated PR*"
+          pr_template: ".github/PULL_REQUEST_TEMPLATE.md"   # Path to pull request template, requires pr_title to be set, excludes pr_body
+          pr_reviewer: "neoskx"                         # Comma-separated list (no spaces)
+          pr_assignee: "neoskx"                         # Comma-separated list (no spaces)
+          pr_label: "release"                               # Comma-separated list (no spaces)
+          pr_draft: true                                    # Creates pull request as draft
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request to `develop`
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "release/v${{env.VERSION}}"        # If blank, default: triggered branch
+          destination_branch: "develop"                      # If blank, default: master
+          pr_title: |                                       # Title of pull request
+            "Release ${{env.VERSION}}: Pulling release/v${{env.VERSION}} into develop"
+          pr_body: |                                        # Full markdown support, requires pr_title to be set
+            ":crown: *An automated PR*"
+          pr_reviewer: "neoskx"                         # Comma-separated list (no spaces)
+          pr_assignee: "neoskx"                         # Comma-separated list (no spaces)
+          pr_label: "release"                               # Comma-separated list (no spaces)
+          pr_draft: true                                    # Creates pull request as draft
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
