@@ -1,6 +1,6 @@
 {
-  "name": "dia-agents-baseservice",
-  "version": "0.2.0",
+  "name": "bitspider-agent-baseservice",
+  "version": "0.1.7",
   "main": "./index.js",
   "author": "help.munewio@gmail.com",
   "engines": {
