@@ -23,7 +23,7 @@ jobs:
       - name: Print git information and ls current folder
         run: git status && pwd && ls
       - name: Install node_modules
-        run: npm ci
+        run: yarn
       - run: npm test
 
   publish-npm:
@@ -41,7 +41,7 @@ jobs:
         run: |
           version="${GITHUB_REF##*/v}"
           npm version $version
-      - run: npm ci
+      - run: yarn
       - name: Publish node_module
         run: npm publish
         env:
