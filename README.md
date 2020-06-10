@@ -86,7 +86,7 @@ baseservice.worker(headlessWorker);
 - `Object`: Woker object or BaseService
 
 ## `getPublic`
-Return absolute path to `public` folder, anything you store in `public` folder, you can access by `/<path_to_file>`. 
+Return absolute path to `public` folder, anything you store in `public` folder, you can access by `/<path_to_file>`.
 
 ### Returns
 - `String`: Absolute path to `public` folder
@@ -95,13 +95,13 @@ Return absolute path to `public` folder, anything you store in `public` folder, 
 Start server, similar with `express.listen`
 
 ```js
-const baseservice = require('dia-agents-baseservice');
+const baseservice = require('bitspider-agent-baseservice');
 baseservice.express();
 baseservice.listen();
 ```
 or
 ```js
-const baseservice = require('dia-agents-baseservice');
+const baseservice = require('bitspider-agent-baseservice');
 baseservice.express();
 baseservice.listen(9090);
 ```
@@ -117,7 +117,7 @@ baseservice.listen(9090);
 Return [winston](https://github.com/winstonjs/winston) logger, you can use this to add your logs, and view by `/log/combined.log` or `/log/error.log`
 
 ```js
-const baseservice = require('dia-agents-baseservice');
+const baseservice = require('bitspider-agent-baseservice');
 const logger = baseservice.logger;
 logger.info('Just for test');
 ```
