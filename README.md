@@ -1,8 +1,8 @@
-[BitSpider Agent BaseService](https://munew.io)
+[BitSky Producer SDK](https://bitsky.ai)
 ===
 
 ```js
-const baseservice = require('bitspider-agent-baseservice');
+const baseservice = require('@bitskyai/producer-sdk');
 baseservice.express();
 baseservice.listen();
 ```
@@ -20,21 +20,21 @@ Installation is done using the
 [`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
 
 ```bash
-$ npm install bitspider-agent-baseservice
+$ npm install @bitskyai/producer-sdk
 ```
 
-[dia-agents-service](https://github.com/munew/dia-agents-service) is a good example
+[bitsky-service-producer](https://github.com/bitskyai/bitsky-service-producer) is a good example
 
 # Features
-1. Implement RESTFul APIs to get and update intelligences to [Munew Engine](https://docs.munew.io/overview#munew-engine)
-2. Default [Agent](https://docs.munew.io/overview#agent) is Service Agent
+1. Implement RESTFul APIs to get and update intelligences to [BitSky](https://docs.bitsky.ai/overview#bitsky-supplier)
+2. Default [Producer](https://docs.bitsky.ai/overview#producer) is **Service Producer**
 
 # APIs
 ## `express`
 Create an [ExpressJS](https://expressjs.com/) app, and configure routes, JSON limit, static folder.
 
 ```js
-const baseservice = require("bitspider-agent-baseservice");
+const baseservice = require("@bitskyai/producer-sdk");
 baseservice.express();
 ```
 
@@ -52,10 +52,10 @@ baseservice.express();
 - `Object`: [An Express Application Instance](https://expressjs.com/en/4x/api.html#express). You can use express API to add additional configuration
 
 ## `type`
-Get or set agent type. Currently support type is `['BROWSEREXTENSION', 'HEADLESSBROSWER', 'SERVICE']`. Default is `SERVICE` type
+Get or set producer type. Currently support type is `['HEADLESSBROSWER', 'SERVICE']`. Default is `SERVICE` type
 
 ```js
-const baseservice = require("bitspider-agent-baseservice");
+const baseservice = require("@bitskyai/producer-sdk");
 baseservice.express();
 baseservice.type("HEADLESSBROWSER");
 ```
@@ -72,7 +72,7 @@ Get or set worker. Worker responses for collect intelligences. Default it uses `
 
 ```js
 const { headlessWorker } = require("./workers/headlessWorker");
-const baseservice = require("bitspider-agent-baseservice");
+const baseservice = require("@bitskyai/producer-sdk");
 baseservice.express();
 baseservice.type("HEADLESSBROWSER");
 baseservice.worker(headlessWorker);
@@ -95,13 +95,13 @@ Return absolute path to `public` folder, anything you store in `public` folder, 
 Start server, similar with `express.listen`
 
 ```js
-const baseservice = require('bitspider-agent-baseservice');
+const baseservice = require('@bitskyai/producer-sdk');
 baseservice.express();
 baseservice.listen();
 ```
 or
 ```js
-const baseservice = require('bitspider-agent-baseservice');
+const baseservice = require('@bitskyai/producer-sdk');
 baseservice.express();
 baseservice.listen(9090);
 ```
@@ -117,7 +117,7 @@ baseservice.listen(9090);
 Return [winston](https://github.com/winstonjs/winston) logger, you can use this to add your logs, and view by `/log/combined.log` or `/log/error.log`
 
 ```js
-const baseservice = require('bitspider-agent-baseservice');
+const baseservice = require('@bitskyai/producer-sdk');
 const logger = baseservice.logger;
 logger.info('Just for test');
 ```
