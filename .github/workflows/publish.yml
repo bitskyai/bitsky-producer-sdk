@@ -48,7 +48,7 @@ jobs:
       - name: Install node_modules
         run: yarn
       - name: Publish to npmjs.org
-        run: npm publish
+        run: npm publish --access=public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       # - uses: actions/setup-node@v1.4.2
