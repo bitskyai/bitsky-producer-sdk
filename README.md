@@ -41,7 +41,7 @@ baseservice.express();
 #### Routes
 1. `/`: return index page
 2. `/health`: return health status of this server
-3. `/agent`: return current agent configuration. If agent don't exist then return empty
+3. `/producer`: return current producer configuration. If producer don't exist then return empty
 4. `/log/combined.log`: All logs for debug purpose
 5. `/log/error.log`: Error logs
 
