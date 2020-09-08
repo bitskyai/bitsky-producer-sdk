@@ -26,7 +26,7 @@ $ npm install @bitskyai/producer-sdk
 [bitsky-service-producer](https://github.com/bitskyai/bitsky-service-producer) is a good example
 
 # Features
-1. Implement RESTFul APIs to get and update intelligences to [BitSky](https://docs.bitsky.ai/overview#bitsky-supplier)
+1. Implement RESTFul APIs to get and update Tasks to [BitSky](https://docs.bitsky.ai/overview#bitsky-supplier)
 2. Default [Producer](https://docs.bitsky.ai/overview#producer) is **Service Producer**
 
 # APIs
@@ -68,7 +68,7 @@ baseservice.type("HEADLESSBROWSER");
 - `String|Object`: Type string or BaseService
 
 ## `worker`
-Get or set worker. Worker responses for collect intelligences. Default it uses `service` worker.
+Get or set worker. Worker responses for collect tasks. Default it uses `service` worker.
 
 ```js
 const { headlessWorker } = require("./workers/headlessWorker");
