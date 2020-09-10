@@ -1,4 +1,4 @@
-## this workflow is used to publish dia-agents-baseservice to npmjs.com
+## this workflow is used to publish @bitskyai/producer-sdk to npmjs.com
 ## Trigger condition:
 ## 1. create a release
 name: Publish @bitskyai/producer-sdk

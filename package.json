@@ -1,6 +1,6 @@
 {
   "name": "@bitskyai/producer-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./index.js",
   "author": "help.bitskyai@gmail.com",
   "engines": {
@@ -25,6 +25,6 @@
     "winston": "3.3.3"
   },
   "devDependencies": {
-    "eslint": "7.8.0"
+    "eslint": "7.8.1"
   }
 }
