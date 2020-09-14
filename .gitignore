@@ -105,4 +105,5 @@ dist
 
 lib/public/screenshots
 preferences.json
-package-lock.json
+# package-lock.json
+yarn.lock
